@@ -6,404 +6,6 @@
 <title>Radial Stack — 渐变标识图生成器</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #08080c;
-    --surface: #111118;
-    --surface-2: #1a1a24;
-    --surface-3: #22222e;
-    --border: #2a2a38;
-    --border-hover: #3a3a50;
-    --text: #e8e8f0;
-    --text-2: #9898a8;
-    --text-3: #68687a;
-    --accent: #c8a0ff;
-    --accent-dim: rgba(200,160,255,0.12);
-    --accent-glow: rgba(200,160,255,0.06);
-    --radius: 10px;
-    --font-cn: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-    --font-mono: "DM Mono", "SF Mono", monospace;
-    --font-display: "Instrument Serif", Georgia, serif;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-cn);
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  .app {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    grid-template-rows: auto 1fr;
-    height: 100vh;
-    gap: 0;
-  }
-
-  .header {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 28px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    backdrop-filter: blur(12px);
-  }
-
-  .header-brand {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-
-  .header-brand h1 {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 400;
-    font-style: italic;
-    letter-spacing: -0.5px;
-    color: var(--text);
-  }
-
-  .header-brand .tag {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--accent);
-    background: var(--accent-dim);
-    padding: 3px 8px;
-    border-radius: 4px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .header-actions { display: flex; gap: 8px; }
-
-  .panel {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-    padding: 0;
-  }
-
-  .panel::-webkit-scrollbar { width: 4px; }
-  .panel::-webkit-scrollbar-track { background: transparent; }
-  .panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .section {
-    padding: 20px 22px;
-    border-bottom: 1px solid var(--border);
-    animation: fadeIn 0.4s ease both;
-  }
-
-  .section:nth-child(1) { animation-delay: 0.05s; }
-  .section:nth-child(2) { animation-delay: 0.1s; }
-  .section:nth-child(3) { animation-delay: 0.15s; }
-  .section:nth-child(4) { animation-delay: 0.2s; }
-  .section:nth-child(5) { animation-delay: 0.25s; }
-  .section:nth-child(6) { animation-delay: 0.3s; }
-
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 12px;
-  }
-
-  .input-field {
-    width: 100%;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--font-cn);
-    font-size: 16px;
-    font-weight: 500;
-    padding: 10px 14px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  .input-field:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-dim);
-  }
-
-  .input-field::placeholder { color: var(--text-3); }
-
-  .palette-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-  }
-
-  .palette-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-    background: transparent;
-  }
-
-  .palette-option:hover { border-color: var(--border-hover); background: var(--surface-2); }
-  .palette-option.active { border-color: var(--accent); background: var(--accent-dim); }
-
-  .palette-dots { display: flex; gap: 2px; }
-
-  .palette-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .palette-name {
-    font-size: 11px;
-    color: var(--text-2);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .style-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-  }
-
-  .style-option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 4px 8px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-    background: transparent;
-  }
-
-  .style-option:hover { border-color: var(--border-hover); background: var(--surface-2); }
-  .style-option.active { border-color: var(--accent); background: var(--accent-dim); }
-
-  .style-icon { font-size: 18px; line-height: 1; }
-  .style-label { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
-
-  .slider-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .slider-label { font-size: 12px; color: var(--text-2); }
-
-  .slider-value {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent);
-    min-width: 32px;
-    text-align: right;
-  }
-
-  input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    background: var(--surface-3);
-    border-radius: 2px;
-    outline: none;
-    margin: 6px 0 14px;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    background: var(--accent);
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 8px var(--accent-dim);
-  }
-
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .toggle {
-    position: relative;
-    width: 36px;
-    height: 20px;
-    background: var(--surface-3);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .toggle.active { background: var(--accent); }
-
-  .toggle::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    background: var(--text);
-    border-radius: 50%;
-    transition: transform 0.2s;
-  }
-
-  .toggle.active::after { transform: translateX(16px); }
-
-  .seed-row { display: flex; gap: 6px; }
-  .seed-row .input-field { font-family: var(--font-mono); font-size: 13px; flex: 1; }
-
-  .btn-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-2);
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-
-  .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-
-  .btn-group { display: flex; gap: 8px; }
-
-  .btn {
-    flex: 1;
-    padding: 10px 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-family: var(--font-cn);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: var(--surface-2);
-    color: var(--text);
-  }
-
-  .btn:hover { border-color: var(--border-hover); background: var(--surface-3); }
-
-  .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #0a0a0f;
-  }
-
-  .btn-primary:hover { background: #d4b0ff; border-color: #d4b0ff; }
-
-  .preview {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .preview::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 40px 40px;
-    opacity: 0.15;
-  }
-
-  .preview-frame {
-    position: relative;
-    width: min(65vh, 65vw, 600px);
-    aspect-ratio: 1;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.06),
-      0 20px 60px rgba(0,0,0,0.5),
-      0 0 120px var(--accent-glow);
-    transition: box-shadow 0.4s;
-  }
-
-  .preview-frame:hover {
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.1),
-      0 24px 80px rgba(0,0,0,0.6),
-      0 0 160px rgba(200,160,255,0.1);
-  }
-
-  .preview-frame svg { width: 100%; height: 100%; display: block; }
-
-  .select-field {
-    width: 100%;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--font-cn);
-    font-size: 13px;
-    padding: 8px 12px;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-
-  .select-field:focus { border-color: var(--accent); }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .footer {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    padding: 6px 16px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-3);
-    z-index: 10;
-  }
-
-  .footer a { color: var(--text-3); text-decoration: none; }
-  .footer a:hover { color: var(--accent); }
-
-  @media (max-width: 860px) {
-    .app { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; }
-    .panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; }
-    .preview-frame { width: min(80vw, 400px); }
-  }
-</style>
 </head>
 <body>
 
@@ -411,18 +13,59 @@
   <header class="header">
     <div class="header-brand">
       <h1>Radial Stack</h1>
-      <span class="tag">v1.0</span>
+      <span class="tag">v2.0</span>
     </div>
     <div class="header-actions">
-      <button class="btn" onclick="downloadSVG()"><span>SVG</span><span style="font-size:14px">↓</span></button>
-      <button class="btn" onclick="downloadPNG()"><span>PNG</span><span style="font-size:14px">↓</span></button>
+      <button class="btn" onclick="downloadSVG()"><span>SVG</span><span style="font-size:14px">&darr;</span></button>
+      <button class="btn" onclick="downloadPNG()"><span>PNG</span><span style="font-size:14px">&darr;</span></button>
     </div>
   </header>
 
   <aside class="panel" id="panel">
     <div class="section">
-      <div class="section-label">部门名称</div>
-      <input class="input-field" type="text" id="nameInput" value="综合管理部" placeholder="输入部门名称…">
+      <div class="section-label">文本内容</div>
+      <input class="input-field" type="text" id="nameInput" value="综合管理部" placeholder="输入文本...">
+    </div>
+
+    <div class="section">
+      <div class="section-label">画布预设</div>
+      <select class="select-field" id="presetSelect" onchange="setPreset()">
+        <optgroup label="通用">
+          <option value="square" selected>正方形 (1:1)</option>
+          <option value="banner-wide">宽幅横幅 (16:9)</option>
+          <option value="banner-ultra">超宽横幅 (21:9)</option>
+        </optgroup>
+        <optgroup label="社交媒体">
+          <option value="wechat-cover">公众号封面 (2.35:1)</option>
+          <option value="wechat-article">文章配图</option>
+          <option value="xiaohongshu">小红书 (3:4)</option>
+          <option value="douyin">抖音封面 (9:16)</option>
+        </optgroup>
+        <optgroup label="电商">
+          <option value="taobao-main">淘宝主图 (1:1)</option>
+          <option value="taobao-banner">店铺横幅</option>
+          <option value="jd-sku">京东主图 (1:1)</option>
+        </optgroup>
+        <optgroup label="设计">
+          <option value="poster-a4">A4 海报</option>
+          <option value="poster-horizontal">横版海报 (3:2)</option>
+          <option value="ppt-slide">PPT 背景 (16:9)</option>
+        </optgroup>
+        <optgroup label="壁纸">
+          <option value="desktop-wallpaper">桌面壁纸 (16:10)</option>
+          <option value="mobile-wallpaper">手机壁纸</option>
+        </optgroup>
+      </select>
+      <div style="margin-top:10px">
+        <div class="section-label" style="margin-bottom:8px">导出分辨率</div>
+        <div class="resolution-pills" id="resPills">
+          <span class="res-pill active" data-res="standard" onclick="setResolution(this)">1K</span>
+          <span class="res-pill" data-res="hd" onclick="setResolution(this)">HD</span>
+          <span class="res-pill" data-res="2k" onclick="setResolution(this)">2K</span>
+          <span class="res-pill" data-res="4k" onclick="setResolution(this)">4K</span>
+          <span class="res-pill" data-res="8k" onclick="setResolution(this)">8K</span>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -434,28 +77,31 @@
       <div class="section-label">文字样式</div>
       <div class="style-grid">
         <div class="style-option active" data-style="pill" onclick="setTextStyle(this)">
-          <span class="style-icon">▣</span><span class="style-label">胶囊</span>
+          <span class="style-icon">&#9635;</span><span class="style-label">胶囊</span>
         </div>
         <div class="style-option" data-style="overlay" onclick="setTextStyle(this)">
           <span class="style-icon">A</span><span class="style-label">叠加</span>
         </div>
         <div class="style-option" data-style="vertical" onclick="setTextStyle(this)">
-          <span class="style-icon">︱</span><span class="style-label">竖排</span>
+          <span class="style-icon">&#xFE31;</span><span class="style-label">竖排</span>
         </div>
         <div class="style-option" data-style="artistic" onclick="setTextStyle(this)">
-          <span class="style-icon">✦</span><span class="style-label">艺术</span>
+          <span class="style-icon">&#10022;</span><span class="style-label">艺术</span>
+        </div>
+        <div class="style-option" data-style="none" onclick="setTextStyle(this)">
+          <span class="style-icon">&#9711;</span><span class="style-label">无文字</span>
         </div>
       </div>
     </div>
 
     <div class="section">
       <div class="section-label">渐变参数</div>
-      <div class="slider-row"><span class="slider-label">层数</span><span class="slider-value" id="layersValue">12</span></div>
-      <input type="range" id="layersSlider" min="3" max="20" value="12" oninput="updateSlider('layers')">
+      <div class="slider-row"><span class="slider-label">层数</span><span class="slider-value" id="layersValue">8</span></div>
+      <input type="range" id="layersSlider" min="3" max="20" value="8" oninput="updateSlider('layers')">
       <div class="slider-row"><span class="slider-label">饱和度</span><span class="slider-value" id="saturationValue">130%</span></div>
       <input type="range" id="saturationSlider" min="80" max="180" value="130" oninput="updateSlider('saturation')">
-      <div class="slider-row"><span class="slider-label">模糊</span><span class="slider-value" id="blurValue">0</span></div>
-      <input type="range" id="blurSlider" min="0" max="30" value="0" oninput="updateSlider('blur')">
+      <div class="slider-row"><span class="slider-label">模糊</span><span class="slider-value" id="blurValue">3</span></div>
+      <input type="range" id="blurSlider" min="0" max="30" value="3" oninput="updateSlider('blur')">
       <div class="toggle-row"><span class="slider-label">噪声纹理</span><div class="toggle" id="noiseToggle" onclick="toggleNoise()"></div></div>
       <div class="slider-row" style="margin-top:4px"><span class="slider-label">混合模式</span></div>
       <select class="select-field" id="blendSelect" onchange="updatePreview()">
@@ -471,8 +117,8 @@
       <div class="section-label">随机种子</div>
       <div class="seed-row">
         <input class="input-field" type="text" id="seedInput" placeholder="自动（基于名称）">
-        <button class="btn-icon" onclick="randomizeSeed()" title="随机种子">🎲</button>
-        <button class="btn-icon" onclick="clearSeed()" title="清除种子">✕</button>
+        <button class="btn-icon" onclick="randomizeSeed()" title="随机种子">&#127922;</button>
+        <button class="btn-icon" onclick="clearSeed()" title="清除种子">&#10005;</button>
       </div>
     </div>
 
@@ -488,166 +134,7 @@
   </main>
 </div>
 
-<script type="module">
-  import { buildSVG } from '../src/core/svg-builder.js';
-  import { getAllPalettes } from '../src/core/palettes.js';
-
-  window._buildSVG = buildSVG;
-  window._palettes = getAllPalettes();
-
-  // Build palette grid using safe DOM methods
-  const grid = document.getElementById('paletteGrid');
-  window._palettes.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'palette-option' + (i === 0 ? ' active' : '');
-    div.dataset.palette = p.name;
-    div.onclick = () => setPalette(div);
-
-    const dotsDiv = document.createElement('div');
-    dotsDiv.className = 'palette-dots';
-    p.colors.slice(0, 4).forEach(c => {
-      const dot = document.createElement('span');
-      dot.className = 'palette-dot';
-      dot.style.background = c;
-      dotsDiv.appendChild(dot);
-    });
-
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'palette-name';
-    nameSpan.textContent = p.label;
-
-    div.appendChild(dotsDiv);
-    div.appendChild(nameSpan);
-    grid.appendChild(div);
-  });
-
-  window._currentPalette = 'warm';
-  window._currentTextStyle = 'pill';
-  window.updatePreview();
-</script>
-
-<script>
-  function updatePreview() {
-    const name = document.getElementById('nameInput').value || '部门名称';
-    const layers = parseInt(document.getElementById('layersSlider').value);
-    const saturation = parseInt(document.getElementById('saturationSlider').value);
-    const blur = parseInt(document.getElementById('blurSlider').value);
-    const noise = document.getElementById('noiseToggle').classList.contains('active');
-    const blendMode = document.getElementById('blendSelect').value || undefined;
-    const seed = document.getElementById('seedInput').value || undefined;
-
-    const svg = window._buildSVG({
-      name,
-      palette: window._currentPalette,
-      textStyle: window._currentTextStyle,
-      layers, saturation, blur, noise, blendMode, seed,
-    });
-
-    const frame = document.getElementById('previewFrame');
-    // Clear previous content safely
-    while (frame.firstChild) frame.removeChild(frame.firstChild);
-
-    // Parse SVG safely via DOMParser (no innerHTML)
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svg, 'image/svg+xml');
-    const errorNode = doc.querySelector('parsererror');
-    if (errorNode) {
-      const errMsg = document.createElement('p');
-      errMsg.textContent = 'SVG 解析错误';
-      errMsg.style.color = '#ff6b6b';
-      frame.appendChild(errMsg);
-      return;
-    }
-    const svgEl = doc.documentElement;
-    svgEl.style.width = '100%';
-    svgEl.style.height = '100%';
-    frame.appendChild(document.adoptNode(svgEl));
-
-    window._lastSVG = svg;
-    window._lastName = name;
-  }
-
-  function setPalette(el) {
-    document.querySelectorAll('.palette-option').forEach(e => e.classList.remove('active'));
-    el.classList.add('active');
-    window._currentPalette = el.dataset.palette;
-    updatePreview();
-  }
-
-  function setTextStyle(el) {
-    document.querySelectorAll('.style-option').forEach(e => e.classList.remove('active'));
-    el.classList.add('active');
-    window._currentTextStyle = el.dataset.style;
-    updatePreview();
-  }
-
-  function updateSlider(type) {
-    const slider = document.getElementById(type + 'Slider');
-    const display = document.getElementById(type + 'Value');
-    display.textContent = slider.value + (type === 'saturation' ? '%' : '');
-    updatePreview();
-  }
-
-  function toggleNoise() {
-    document.getElementById('noiseToggle').classList.toggle('active');
-    updatePreview();
-  }
-
-  function randomizeSeed() {
-    document.getElementById('seedInput').value = Math.random().toString(36).substring(2, 8);
-    updatePreview();
-  }
-
-  function clearSeed() {
-    document.getElementById('seedInput').value = '';
-    updatePreview();
-  }
-
-  function downloadSVG() {
-    if (!window._lastSVG) return;
-    const blob = new Blob([window._lastSVG], { type: 'image/svg+xml' });
-    downloadBlob(blob, (window._lastName || '部门') + '.svg');
-  }
-
-  function downloadPNG() {
-    if (!window._lastSVG) return;
-    const svgBlob = new Blob([window._lastSVG], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(svgBlob);
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1024;
-      canvas.height = 1024;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, 1024, 1024);
-      canvas.toBlob(blob => {
-        downloadBlob(blob, (window._lastName || '部门') + '.png');
-        URL.revokeObjectURL(url);
-      }, 'image/png');
-    };
-    img.src = url;
-  }
-
-  function downloadBlob(blob, filename) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
-  document.getElementById('nameInput').addEventListener('input', updatePreview);
-
-  window.updatePreview = updatePreview;
-  window.setPalette = setPalette;
-  window.setTextStyle = setTextStyle;
-  window.updateSlider = updateSlider;
-  window.toggleNoise = toggleNoise;
-  window.randomizeSeed = randomizeSeed;
-  window.clearSeed = clearSeed;
-  window.downloadSVG = downloadSVG;
-  window.downloadPNG = downloadPNG;
-</script>
+<script type="module" src="./main.js"></script>
 
 <footer class="footer">&copy; 2026 Zeng Zixuan &middot; <a href="../LICENSE">MIT License</a></footer>
 </body>
