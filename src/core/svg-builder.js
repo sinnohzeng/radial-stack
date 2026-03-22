@@ -7,7 +7,9 @@ import { layoutText } from './text-layout.js';
 /**
  * @typedef {Object} BuildOptions
  * @property {string} name - Department name
- * @property {number} [size=800] - Canvas size (square)
+ * @property {number} [size=800] - Canvas size (square shorthand)
+ * @property {number} [width] - Canvas width (overrides size)
+ * @property {number} [height] - Canvas height (overrides size)
  * @property {string|string[]} [palette='warm'] - Palette name or custom color array
  * @property {string|number} [seed] - Random seed (defaults to name hash)
  * @property {number} [layers=12] - Number of gradient layers
@@ -37,10 +39,12 @@ export function buildSVG(options) {
   const {
     name,
     size = 800,
+    width: widthOpt,
+    height: heightOpt,
     palette: paletteInput = 'warm',
     seed,
-    layers = 12,
-    blur = 0,
+    layers = 8,
+    blur = 3,
     noise = false,
     saturation = 130,
     textStyle = 'pill',
@@ -50,6 +54,10 @@ export function buildSVG(options) {
     pill,
     overlay,
   } = options;
+
+  // Resolve dimensions: width/height override size
+  const w = widthOpt ?? size;
+  const h = heightOpt ?? size;
 
   // Resolve palette and create RNG
   const palette = resolvePalette(paletteInput);
@@ -65,17 +73,17 @@ export function buildSVG(options) {
   const styles = generateGradientStyles(palette.background, gradientIds);
 
   // Generate gradient rect layers
-  const gradientLayers = generateGradientLayers(gradientIds, rng, layers, size);
+  const gradientLayers = generateGradientLayers(gradientIds, rng, layers, w, h);
 
   // Build filter definitions
   const filters = buildFilters(blur, noise);
 
   // Generate text layout
   const textConfig = { fontSize, pill, overlay };
-  const textElements = layoutText(textStyle, name, size, textConfig, rng);
+  const textElements = layoutText(textStyle, name, w, textConfig, rng, h);
 
   // Generate decorations
-  const decorationElements = buildDecorations(decorations, size);
+  const decorationElements = buildDecorations(decorations, w, h);
 
   // Blend mode attribute for gradient group
   const blendAttr = blendMode ? ` style="mix-blend-mode:${blendMode}"` : '';
@@ -84,7 +92,7 @@ export function buildSVG(options) {
   const filterAttr = filters ? ' filter="url(#fx)"' : '';
   const svgStyle = `width:100%;height:auto;filter:saturate(${saturation}%)`;
 
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="${svgStyle}" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="${svgStyle}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     ${styles}
     ${gradientDefs}
@@ -131,10 +139,13 @@ function buildFilters(blur, noise) {
 /**
  * Build optional SVG decoration elements.
  * @param {object} decorations
- * @param {number} size
+ * @param {number} width
+ * @param {number} [height]
  * @returns {string}
  */
-function buildDecorations(decorations, size) {
+function buildDecorations(decorations, width, height) {
+  const w = width;
+  const h = height ?? width;
   const parts = [];
 
   // Border
@@ -142,21 +153,21 @@ function buildDecorations(decorations, size) {
     const borderColor = decorations.borderColor || 'rgba(255,255,255,0.1)';
     const borderWidth = decorations.borderWidth || 0.5;
     parts.push(
-      `<rect x="${borderWidth / 2}" y="${borderWidth / 2}" width="${size - borderWidth}" height="${size - borderWidth}" fill="none" stroke="${borderColor}" stroke-width="${borderWidth}"/>`
+      `<rect x="${borderWidth / 2}" y="${borderWidth / 2}" width="${w - borderWidth}" height="${h - borderWidth}" fill="none" stroke="${borderColor}" stroke-width="${borderWidth}"/>`
     );
   }
 
   // Corner badge
   if (decorations.cornerBadge) {
     parts.push(
-      `<text x="${size - 30}" y="35" text-anchor="end" font-family="monospace" font-size="18" fill="rgba(255,255,255,0.5)">${decorations.cornerBadge}</text>`
+      `<text x="${w - 30}" y="35" text-anchor="end" font-family="monospace" font-size="18" fill="rgba(255,255,255,0.5)">${decorations.cornerBadge}</text>`
     );
   }
 
   // Logo watermark
   if (decorations.logo) {
     parts.push(
-      `<g transform="translate(${size - 60}, ${size - 60}) scale(0.4)" opacity="0.3">
+      `<g transform="translate(${w - 60}, ${h - 60}) scale(0.4)" opacity="0.3">
         <path d="${decorations.logo}" fill="white"/>
       </g>`
     );

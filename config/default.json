@@ -1,8 +1,8 @@
 {
   "size": 800,
   "palette": "warm",
-  "layers": 12,
-  "blur": 0,
+  "layers": 8,
+  "blur": 3,
   "noise": false,
   "saturation": 130,
   "textStyle": "pill",

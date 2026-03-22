@@ -31,11 +31,13 @@ export function autoFontSize(name) {
  * Semi-transparent rounded rectangle with centered text.
  *
  * @param {string} name
- * @param {number} size
+ * @param {number} width
  * @param {TextConfig} [config={}]
+ * @param {number} [height]
  * @returns {string}
  */
-export function pillLayout(name, size, config = {}) {
+export function pillLayout(name, width, config = {}, height) {
+  const h = height ?? width;
   const escaped = escapeXml(name);
   const fontSize = config.fontSize || autoFontSize(name);
   const bgColor = config.pill?.bgColor || 'rgba(255,255,255,0.88)';
@@ -47,24 +49,26 @@ export function pillLayout(name, size, config = {}) {
   const charWidth = fontSize * 1.1;
   const pillWidth = name.length * charWidth + paddingX * 2;
   const pillHeight = fontSize + paddingY * 2;
-  const pillX = (size - pillWidth) / 2;
-  const pillY = (size - pillHeight) / 2;
+  const pillX = (width - pillWidth) / 2;
+  const pillY = (h - pillHeight) / 2;
   const textY = pillY + pillHeight / 2 + fontSize * 0.35;
 
   return `
   <rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillHeight}" rx="${borderRadius}" fill="${bgColor}"/>
-  <text x="${size / 2}" y="${textY}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="600" fill="${textColor}" letter-spacing="2">${escaped}</text>`;
+  <text x="${width / 2}" y="${textY}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="600" fill="${textColor}" letter-spacing="2">${escaped}</text>`;
 }
 
 /**
  * Generate overlay (large text with shadow) layout SVG elements.
  *
  * @param {string} name
- * @param {number} size
+ * @param {number} width
  * @param {TextConfig} [config={}]
+ * @param {number} [height]
  * @returns {string}
  */
-export function overlayLayout(name, size, config = {}) {
+export function overlayLayout(name, width, config = {}, height) {
+  const h = height ?? width;
   const escaped = escapeXml(name);
   const fontSize = config.fontSize || autoFontSize(name) * 1.3;
   const textColor = config.overlay?.textColor || '#ffffff';
@@ -72,7 +76,7 @@ export function overlayLayout(name, size, config = {}) {
   const shadowBlur = config.overlay?.shadowBlur || 8;
 
   const filterId = 'text-shadow';
-  const textY = size / 2 + fontSize * 0.35;
+  const textY = h / 2 + fontSize * 0.35;
 
   return `
   <defs>
@@ -80,7 +84,7 @@ export function overlayLayout(name, size, config = {}) {
       <feDropShadow dx="0" dy="2" stdDeviation="${shadowBlur}" flood-color="${shadowColor}"/>
     </filter>
   </defs>
-  <text x="${size / 2}" y="${textY}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="700" fill="${textColor}" filter="url(#${filterId})" letter-spacing="4">${escaped}</text>`;
+  <text x="${width / 2}" y="${textY}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="700" fill="${textColor}" filter="url(#${filterId})" letter-spacing="4">${escaped}</text>`;
 }
 
 /**
@@ -88,17 +92,19 @@ export function overlayLayout(name, size, config = {}) {
  * Each character positioned manually for precise control.
  *
  * @param {string} name
- * @param {number} size
+ * @param {number} width
  * @param {TextConfig} [config={}]
+ * @param {number} [height]
  * @returns {string}
  */
-export function verticalLayout(name, size, config = {}) {
+export function verticalLayout(name, width, config = {}, height) {
+  const h = height ?? width;
   const fontSize = config.fontSize || autoFontSize(name) * 0.9;
   const chars = [...name];
   const lineHeight = fontSize * 1.4;
   const totalHeight = chars.length * lineHeight;
-  const startY = (size - totalHeight) / 2 + fontSize;
-  const x = size / 2;
+  const startY = (h - totalHeight) / 2 + fontSize;
+  const x = width / 2;
 
   const charElements = chars.map((char, i) => {
     const y = startY + i * lineHeight;
@@ -119,12 +125,14 @@ export function verticalLayout(name, size, config = {}) {
  * Uses a grid-based constraint system to prevent overlap.
  *
  * @param {string} name
- * @param {number} size
+ * @param {number} width
  * @param {TextConfig} [config={}]
  * @param {() => number} [rng]
+ * @param {number} [height]
  * @returns {string}
  */
-export function artisticLayout(name, size, config = {}, rng) {
+export function artisticLayout(name, width, config = {}, rng, height) {
+  const h = height ?? width;
   const chars = [...name];
   const len = chars.length;
   const baseFontSize = config.fontSize || autoFontSize(name);
@@ -136,12 +144,14 @@ export function artisticLayout(name, size, config = {}, rng) {
   else if (len <= 6) { cols = 3; rows = Math.ceil(len / 3); }
   else { cols = 3; rows = Math.ceil(len / 3); }
 
-  const margin = size * 0.15;
-  const usable = size - margin * 2;
-  const cellW = usable / cols;
-  const cellH = usable / rows;
-  const gridStartX = margin;
-  const gridStartY = margin + (usable - rows * cellH) / 2;
+  const marginX = width * 0.15;
+  const marginY = h * 0.15;
+  const usableW = width - marginX * 2;
+  const usableH = h - marginY * 2;
+  const cellW = usableW / cols;
+  const cellH = usableH / rows;
+  const gridStartX = marginX;
+  const gridStartY = marginY + (usableH - rows * cellH) / 2;
 
   // Use rng for randomization, or fallback to deterministic positions
   const rand = rng || (() => 0.5);
@@ -177,19 +187,21 @@ export function artisticLayout(name, size, config = {}, rng) {
 
 /**
  * Route to the correct text layout function.
- * @param {string} style - 'pill' | 'overlay' | 'vertical' | 'artistic'
+ * @param {string} style - 'pill' | 'overlay' | 'vertical' | 'artistic' | 'none'
  * @param {string} name
- * @param {number} size
+ * @param {number} width
  * @param {TextConfig} [config={}]
  * @param {() => number} [rng]
+ * @param {number} [height]
  * @returns {string}
  */
-export function layoutText(style, name, size, config = {}, rng) {
+export function layoutText(style, name, width, config = {}, rng, height) {
   switch (style) {
-    case 'pill': return pillLayout(name, size, config);
-    case 'overlay': return overlayLayout(name, size, config);
-    case 'vertical': return verticalLayout(name, size, config);
-    case 'artistic': return artisticLayout(name, size, config, rng);
-    default: return pillLayout(name, size, config);
+    case 'none': return '';
+    case 'pill': return pillLayout(name, width, config, height);
+    case 'overlay': return overlayLayout(name, width, config, height);
+    case 'vertical': return verticalLayout(name, width, config, height);
+    case 'artistic': return artisticLayout(name, width, config, rng, height);
+    default: return pillLayout(name, width, config, height);
   }
 }

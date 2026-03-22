@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { resolve, join } from 'path';
 import { buildSVG } from '../core/svg-builder.js';
 import { resolvePalette, hintToPaletteName, getAllPaletteNames } from '../core/palettes.js';
+import { getScenePreset, getResolutionPreset, getAllScenePresetNames, getAllResolutionPresetNames, computeExportSize, formatPresetListing } from '../core/presets.js';
 import { readInput } from './file-reader.js';
 import { svgToPng } from './png-export.js';
 import { generateOverviewHTML } from './overview.js';
@@ -74,10 +75,24 @@ function validateConfig(config) {
       process.exit(1);
     }
   }
-  const validStyles = ['pill', 'overlay', 'vertical', 'artistic'];
+  const validStyles = ['pill', 'overlay', 'vertical', 'artistic', 'none'];
   if (config.textStyle && !validStyles.includes(config.textStyle)) {
     console.error(`❌ 未知文字样式 "${config.textStyle}"。可用: ${validStyles.join(', ')}`);
     process.exit(1);
+  }
+  if (config.preset) {
+    const presetNames = getAllScenePresetNames();
+    if (!presetNames.includes(config.preset)) {
+      console.error(`❌ 未知场景预设 "${config.preset}"。可用: ${presetNames.join(', ')}`);
+      process.exit(1);
+    }
+  }
+  if (config.resolution) {
+    const resNames = getAllResolutionPresetNames();
+    if (!resNames.includes(config.resolution)) {
+      console.error(`❌ 未知分辨率预设 "${config.resolution}"。可用: ${resNames.join(', ')}`);
+      process.exit(1);
+    }
   }
 }
 
@@ -99,14 +114,22 @@ function generateOne(entry, config, outputDir, index, total) {
     console.log(`  [${index + 1}/${total}] 正在生成: ${name}...`);
   }
 
+  // Resolve dimensions from preset or config
+  const scenePreset = config.preset ? getScenePreset(config.preset) : null;
+  const resPreset = config.resolution ? getResolutionPreset(config.resolution) : null;
+
+  const svgWidth = scenePreset ? scenePreset.width : (Number(config.width) || Number(config.size) || 800);
+  const svgHeight = scenePreset ? scenePreset.height : (Number(config.height) || Number(config.size) || 800);
+
   /** @type {BuildOptions} */
   const opts = {
     name,
-    size: Number(config.size) || 800,
+    width: svgWidth,
+    height: svgHeight,
     palette,
     seed: entry.seed || config.seed,
-    layers: Number(config.layers) || 12,
-    blur: Number(config.blur) || 0,
+    layers: Number(config.layers) || 8,
+    blur: config.blur !== undefined ? Number(config.blur) : 3,
     noise: config.noise === true || config.noise === 'true',
     saturation: Number(config.saturation) || 130,
     textStyle: config.textStyle || 'pill',
@@ -125,10 +148,25 @@ function generateOne(entry, config, outputDir, index, total) {
 
   // Write PNG if requested
   if (config.png) {
-    const pngSize = Number(config.pngSize) || 1024;
+    let pngW, pngH;
+    if (scenePreset && resPreset) {
+      const dims = computeExportSize(scenePreset, resPreset);
+      pngW = dims.pngWidth;
+      pngH = dims.pngHeight;
+    } else if (scenePreset) {
+      pngW = scenePreset.pngWidth;
+      pngH = scenePreset.pngHeight;
+    } else if (resPreset) {
+      pngW = svgWidth * resPreset.scale;
+      pngH = svgHeight * resPreset.scale;
+    } else {
+      const pngSize = Number(config.pngSize) || 1024;
+      pngW = pngSize;
+      pngH = svgWidth === svgHeight ? pngSize : Math.round(pngSize * (svgHeight / svgWidth));
+    }
     const { buffer, warnings } = svgToPng(svg, {
-      width: pngSize,
-      height: pngSize,
+      width: pngW,
+      height: pngH,
       fontPath: config.fontPath,
     });
     const pngPath = join(outputDir, `${name}.png`);
@@ -153,18 +191,29 @@ export function createProgram() {
     .option('-o, --output <dir>', '输出目录', './output')
     .option('-c, --config <path>', '配置文件路径')
     .option('-p, --palette <name>', '配色方案名称')
-    .option('-t, --text-style <style>', '文字样式: pill|overlay|vertical|artistic')
-    .option('-l, --layers <n>', '渐变层数 (1-30)', '12')
-    .option('--blur <n>', '模糊程度 (0-50)', '0')
+    .option('-t, --text-style <style>', '文字样式: pill|overlay|vertical|artistic|none')
+    .option('-l, --layers <n>', '渐变层数 (1-30)')
+    .option('--blur <n>', '模糊程度 (0-50)')
     .option('--noise', '启用噪声纹理')
-    .option('--saturation <n>', '饱和度百分比', '130')
+    .option('--saturation <n>', '饱和度百分比')
     .option('--seed <seed>', '随机种子')
     .option('--png', '同时导出 PNG')
-    .option('--png-size <n>', 'PNG 尺寸 (像素)', '1024')
+    .option('--png-size <n>', 'PNG 尺寸 (像素)')
     .option('--font-path <path>', 'PNG 导出用的中文字体路径')
     .option('--blend-mode <mode>', '混合模式: soft-light|multiply|screen')
     .option('--no-overview', '不生成总览 HTML')
+    .option('--preset <name>', '场景预设 (如 banner-wide, wechat-cover)')
+    .option('--resolution <name>', '分辨率预设: standard|hd|2k|4k|8k')
+    .option('--width <n>', '画布宽度 (覆盖 size)')
+    .option('--height <n>', '画布高度 (覆盖 size)')
+    .option('--list-presets', '列出所有可用预设')
     .action((opts) => {
+      // Handle --list-presets
+      if (opts.listPresets) {
+        console.log(formatPresetListing());
+        return;
+      }
+
       if (!opts.input && !opts.name) {
         console.error('❌ 请指定 --input 文件或 --name 部门名称');
         program.help();
@@ -205,7 +254,7 @@ export function createProgram() {
       if (config.overview !== false && entries.length > 1) {
         const overviewPath = join(outputDir, 'overview.html');
         const html = generateOverviewHTML(results, {
-          configSummary: `配色:${config.palette || 'warm'} 样式:${config.textStyle || 'pill'} 层数:${config.layers || 12}`,
+          configSummary: `配色:${config.palette || 'warm'} 样式:${config.textStyle || 'pill'} 层数:${config.layers || 8}${config.preset ? ` 预设:${config.preset}` : ''}`,
         });
         writeFileSync(overviewPath, html, 'utf-8');
         console.log(`\n📄 总览页面: ${overviewPath}`);

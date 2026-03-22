@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { getPalette, getAllPaletteNames, getAllPalettes, resolvePalette, hintToPaletteName } from '../src/core/palettes.js';
 
-const EXPECTED_PALETTES = ['warm', 'cool', 'sunset', 'forest', 'ocean', 'creative', 'tech', 'elegant'];
+const EXPECTED_PALETTES = ['warm', 'cool', 'sunset', 'forest', 'ocean', 'creative', 'tech', 'elegant', 'peach', 'mint', 'aurora', 'blush'];
 
 describe('getAllPaletteNames', () => {
-  it('returns exactly 8 palette names', () => {
+  it('returns exactly 12 palette names', () => {
     const names = getAllPaletteNames();
-    expect(names).toHaveLength(8);
+    expect(names).toHaveLength(12);
   });
 
   it('contains all expected palette names', () => {
@@ -18,8 +18,8 @@ describe('getAllPaletteNames', () => {
 });
 
 describe('getAllPalettes', () => {
-  it('returns 8 palette objects', () => {
-    expect(getAllPalettes()).toHaveLength(8);
+  it('returns 12 palette objects', () => {
+    expect(getAllPalettes()).toHaveLength(12);
   });
 });
 

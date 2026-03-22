@@ -7,12 +7,14 @@ import { midpointColor } from './color-utils.js';
  * @property {string[]} colors - Palette colors (hex)
  * @property {() => number} rng - Seeded RNG
  * @property {number} [layers=12] - Number of gradient layers
- * @property {number} [size=800] - Canvas size
+ * @property {number} [size=800] - Canvas size (square shorthand)
+ * @property {number} [width] - Canvas width (overrides size)
+ * @property {number} [height] - Canvas height (overrides size)
  */
 
 /**
  * Select N primary colors from the palette for gradient definitions.
- * Uses 4 colors like OpenAI's implementation, picks distinct ones.
+ * Uses 4 primary colors, picks distinct ones from the palette.
  * @param {string[]} colors
  * @param {() => number} rng
  * @returns {string[]}
@@ -41,7 +43,8 @@ export function generateGradientDefs(paletteColors, rng, layerCount) {
     const id = `rg${i}`;
     gradientIds.push(id);
     const color = primaryColors[i];
-    const fx = randomRange(0.1, 0.45, rng).toFixed(4);
+    const fx = randomRange(0.1, 0.9, rng).toFixed(4);
+    const fy = randomRange(0.1, 0.9, rng).toFixed(4);
 
     // Some gradients get a 3-stop definition with an OKLCH midpoint
     const useThreeStops = rng() > 0.5 && primaryColors.length > 1;
@@ -66,7 +69,7 @@ export function generateGradientDefs(paletteColors, rng, layerCount) {
     }
 
     gradients.push(
-      `<radialGradient id="${id}" fx="${fx}" fy="0.5">${stops}</radialGradient>`
+      `<radialGradient id="${id}" fx="${fx}" fy="${fy}">${stops}</radialGradient>`
     );
   }
 
@@ -92,28 +95,30 @@ export function generateGradientStyles(background, gradientIds) {
 
 /**
  * Generate the transform chain for a single gradient layer.
- * Follows OpenAI's pattern: translate(center) scale() skewX() rotate() translate(offset) translate(-center)
+ * Follows the radial gradient stacking pattern: translate(center) scale() skewX() rotate() translate(offset) translate(-center)
  *
  * @param {() => number} rng
- * @param {number} size
+ * @param {number} width
+ * @param {number} height
  * @returns {string}
  */
-function generateTransform(rng, size) {
-  const center = size / 2;
-  const sx = randomRange(0.7, 1.5, rng).toFixed(4);
-  const sy = randomRange(0.6, 1.5, rng).toFixed(4);
+function generateTransform(rng, width, height) {
+  const cx = width / 2;
+  const cy = height / 2;
+  const sx = randomRange(0.5, 2.0, rng).toFixed(4);
+  const sy = randomRange(0.5, 2.0, rng).toFixed(4);
   const skew = randomRange(-10, 10, rng).toFixed(4);
   const rotation = randomRange(0, 360, rng).toFixed(2);
-  const tx = randomRange(-center * 0.85, center * 0.85, rng).toFixed(2);
-  const ty = randomRange(-center * 0.85, center * 0.85, rng).toFixed(2);
+  const tx = randomRange(-cx * 0.85, cx * 0.85, rng).toFixed(2);
+  const ty = randomRange(-cy * 0.85, cy * 0.85, rng).toFixed(2);
 
   return [
-    `translate(${center} ${center})`,
+    `translate(${cx} ${cy})`,
     `scale(${sx} ${sy})`,
     `skewX(${skew})`,
     `rotate(${rotation})`,
     `translate(${tx} ${ty})`,
-    `translate(${-center} ${-center})`,
+    `translate(${-cx} ${-cy})`,
   ].join(' ');
 }
 
@@ -124,15 +129,17 @@ function generateTransform(rng, size) {
  * @param {string[]} gradientIds
  * @param {() => number} rng
  * @param {number} layerCount
- * @param {number} size
+ * @param {number} width - Canvas width
+ * @param {number} [height] - Canvas height (defaults to width for square)
  * @returns {string}
  */
-export function generateGradientLayers(gradientIds, rng, layerCount, size) {
+export function generateGradientLayers(gradientIds, rng, layerCount, width, height) {
+  const h = height ?? width;
   const rects = [];
 
   for (let i = 0; i < layerCount; i++) {
     const gradIndex = i % gradientIds.length;
-    const transform = generateTransform(rng, size);
+    const transform = generateTransform(rng, width, h);
 
     // Outer layers more transparent, inner layers more opaque
     const progress = i / layerCount;

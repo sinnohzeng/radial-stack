@@ -58,6 +58,30 @@ const PALETTES = {
     colors: ['#D4AF37', '#8B0000', '#C9B037', '#FFFFF0', '#722F37'],
     background: '#1A1A1A',
   },
+  peach: {
+    name: 'peach',
+    label: '桃粉柔和',
+    colors: ['#FFB5A7', '#FCD5CE', '#F8EDEB', '#F9DCC4', '#FAE1DD'],
+    background: '#FFF5F0',
+  },
+  mint: {
+    name: 'mint',
+    label: '薄荷清新',
+    colors: ['#B5EAD7', '#C7F0DB', '#E2F0CB', '#FFDAC1', '#95E1D3'],
+    background: '#F0FFF5',
+  },
+  aurora: {
+    name: 'aurora',
+    label: '极光梦幻',
+    colors: ['#C3B1E1', '#A2D2FF', '#FFAFCC', '#BDE0FE', '#CDB4DB'],
+    background: '#F5F0FF',
+  },
+  blush: {
+    name: 'blush',
+    label: '腮红暖粉',
+    colors: ['#FFCDB2', '#FFB4A2', '#E5989B', '#F4ACB7', '#FFCAD4'],
+    background: '#FFF0F0',
+  },
 };
 
 /**
@@ -124,12 +148,20 @@ export function hintToPaletteName(hint) {
     creative: 'creative',
     tech: 'tech',
     elegant: 'elegant',
+    peach: 'peach',
+    mint: 'mint',
+    aurora: 'aurora',
+    blush: 'blush',
     hot: 'warm',
     cold: 'cool',
     nature: 'forest',
     sea: 'ocean',
     art: 'creative',
     business: 'elegant',
+    soft: 'peach',
+    pastel: 'aurora',
+    pink: 'blush',
+    fresh: 'mint',
   };
   return map[hint.toLowerCase()] || 'warm';
 }
