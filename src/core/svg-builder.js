@@ -15,9 +15,17 @@ import { layoutText } from './text-layout.js';
  * @property {number} [layers=12] - Number of gradient layers
  * @property {number} [blur=0] - Gaussian blur stdDeviation (0 = disabled)
  * @property {boolean} [noise=false] - Add noise texture
+ * @property {number} [noiseFrequency=0.65] - Noise texture base frequency
  * @property {number} [saturation=130] - Saturation filter percentage
  * @property {string} [textStyle='pill'] - Text layout: pill | overlay | vertical | artistic
  * @property {number} [fontSize] - Override auto font size
+ * @property {number} [fontWeight] - Font weight (400-700)
+ * @property {number} [letterSpacing] - Letter spacing in px
+ * @property {number} [lineHeight] - Line height multiplier
+ * @property {string} [textColor] - Override text color
+ * @property {string} [fontFamily] - CSS font-family string
+ * @property {object} [font] - opentype.Font object for measurement/outline
+ * @property {boolean} [outline] - Convert text to path outlines (export only)
  * @property {string} [blendMode] - CSS mix-blend-mode for gradient layers
  * @property {object} [decorations] - Decoration options
  * @property {boolean} [decorations.border=false]
@@ -43,12 +51,20 @@ export function buildSVG(options) {
     height: heightOpt,
     palette: paletteInput = 'warm',
     seed,
-    layers = 8,
+    layers = 12,
     blur = 3,
     noise = false,
+    noiseFrequency = 0.65,
     saturation = 130,
     textStyle = 'pill',
     fontSize,
+    fontWeight,
+    letterSpacing,
+    lineHeight,
+    textColor,
+    fontFamily,
+    font,
+    outline,
     blendMode,
     decorations = {},
     pill,
@@ -76,10 +92,10 @@ export function buildSVG(options) {
   const gradientLayers = generateGradientLayers(gradientIds, rng, layers, w, h);
 
   // Build filter definitions
-  const filters = buildFilters(blur, noise);
+  const filters = buildFilters(blur, noise, noiseFrequency);
 
   // Generate text layout
-  const textConfig = { fontSize, pill, overlay };
+  const textConfig = { fontSize, fontWeight, letterSpacing, lineHeight, textColor, fontFamily, font, outline, pill, overlay };
   const textElements = layoutText(textStyle, name, w, textConfig, rng, h);
 
   // Generate decorations
@@ -113,7 +129,7 @@ export function buildSVG(options) {
  * @param {boolean} noise
  * @returns {string}
  */
-function buildFilters(blur, noise) {
+function buildFilters(blur, noise, noiseFrequency = 0.65) {
   if (!blur && !noise) return '';
 
   const filterParts = [];
@@ -126,7 +142,7 @@ function buildFilters(blur, noise) {
 
   if (noise) {
     filterParts.push(
-      `<feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise"/>`,
+      `<feTurbulence type="fractalNoise" baseFrequency="${noiseFrequency}" numOctaves="3" result="noise"/>`,
       `<feBlend in="${blur ? 'blurred' : 'SourceGraphic'}" in2="noise" mode="soft-light"/>`
     );
   }

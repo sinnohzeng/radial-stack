@@ -104,7 +104,7 @@ function validateConfig(config) {
  * @param {number} [index]
  * @param {number} [total]
  */
-function generateOne(entry, config, outputDir, index, total) {
+async function generateOne(entry, config, outputDir, index, total) {
   const name = entry.name;
   const palette = entry.color_hint
     ? hintToPaletteName(entry.color_hint)
@@ -121,9 +121,24 @@ function generateOne(entry, config, outputDir, index, total) {
   const svgWidth = scenePreset ? scenePreset.width : (Number(config.width) || Number(config.size) || 800);
   const svgHeight = scenePreset ? scenePreset.height : (Number(config.height) || Number(config.size) || 800);
 
+  // Load font if --font-path is specified (for measurement + outline)
+  let fontObj = null;
+  if (config.fontPath) {
+    try {
+      const opentype = await import('opentype.js');
+      const ot = opentype.default || opentype;
+      fontObj = ot.loadSync(resolve(config.fontPath));
+    } catch (e) {
+      console.warn(`⚠️  字体加载失败: ${e.message}`);
+    }
+  }
+
+  // Handle \n escape in name for CLI
+  const processedName = name.replace(/\\n/g, '\n');
+
   /** @type {BuildOptions} */
   const opts = {
-    name,
+    name: processedName,
     width: svgWidth,
     height: svgHeight,
     palette,
@@ -138,12 +153,15 @@ function generateOne(entry, config, outputDir, index, total) {
     decorations: config.decorations || {},
     pill: config.pill,
     overlay: config.overlay,
+    font: fontObj,
+    outline: config.outline && !!fontObj,
   };
 
   const svg = buildSVG(opts);
 
-  // Write SVG
-  const svgPath = join(outputDir, `${name}.svg`);
+  // Write SVG — use first line of name for filename
+  const fileName = processedName.split('\n')[0];
+  const svgPath = join(outputDir, `${fileName}.svg`);
   writeFileSync(svgPath, svg, 'utf-8');
 
   // Write PNG if requested
@@ -169,7 +187,7 @@ function generateOne(entry, config, outputDir, index, total) {
       height: pngH,
       fontPath: config.fontPath,
     });
-    const pngPath = join(outputDir, `${name}.png`);
+    const pngPath = join(outputDir, `${fileName}.png`);
     writeFileSync(pngPath, buffer);
     warnings.forEach((w) => console.warn(w));
   }
@@ -199,7 +217,8 @@ export function createProgram() {
     .option('--seed <seed>', '随机种子')
     .option('--png', '同时导出 PNG')
     .option('--png-size <n>', 'PNG 尺寸 (像素)')
-    .option('--font-path <path>', 'PNG 导出用的中文字体路径')
+    .option('--font-path <path>', '字体文件路径 (TTF/OTF)')
+    .option('--outline', '将文字转为轮廓路径（需配合 --font-path）')
     .option('--blend-mode <mode>', '混合模式: soft-light|multiply|screen')
     .option('--no-overview', '不生成总览 HTML')
     .option('--preset <name>', '场景预设 (如 banner-wide, wechat-cover)')
@@ -207,7 +226,7 @@ export function createProgram() {
     .option('--width <n>', '画布宽度 (覆盖 size)')
     .option('--height <n>', '画布高度 (覆盖 size)')
     .option('--list-presets', '列出所有可用预设')
-    .action((opts) => {
+    .action(async (opts) => {
       // Handle --list-presets
       if (opts.listPresets) {
         console.log(formatPresetListing());
@@ -222,6 +241,11 @@ export function createProgram() {
 
       const config = resolveConfig(opts);
       validateConfig(config);
+
+      if (config.outline && !config.fontPath) {
+        console.error('❌ --outline 需要同时指定 --font-path');
+        process.exit(1);
+      }
 
       // Ensure output directory exists
       const outputDir = resolve(config.output || './output');
@@ -246,9 +270,10 @@ export function createProgram() {
       console.log(`📝 文字样式: ${config.textStyle || 'pill'}`);
       console.log(`📁 输出目录: ${outputDir}\n`);
 
-      const results = entries.map((entry, i) =>
-        generateOne(entry, config, outputDir, i, entries.length)
-      );
+      const results = [];
+      for (let i = 0; i < entries.length; i++) {
+        results.push(await generateOne(entries[i], config, outputDir, i, entries.length));
+      }
 
       // Generate overview HTML
       if (config.overview !== false && entries.length > 1) {

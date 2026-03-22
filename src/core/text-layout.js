@@ -1,22 +1,46 @@
 // @ts-check
 import { escapeXml, randomRange } from './utils.js';
+import { textToPath } from './text-outliner.js';
 
-const FONT_FAMILY = '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif';
+const DEFAULT_FONT_FAMILY = '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif';
 
 /**
  * @typedef {Object} TextConfig
  * @property {number} [fontSize] - Override auto font size
+ * @property {number} [fontWeight] - Font weight (400-700)
+ * @property {number} [letterSpacing] - Letter spacing in px
+ * @property {number} [lineHeight] - Line height multiplier (e.g. 1.4)
+ * @property {string} [textColor] - Override text color
+ * @property {string} [fontFamily] - CSS font-family string
+ * @property {object} [font] - opentype.Font object for measurement/outline
+ * @property {boolean} [outline] - Convert text to path outlines
  * @property {object} [pill] - Pill-specific config
  * @property {object} [overlay] - Overlay-specific config
  */
 
 /**
+ * Split text into lines, filtering trailing empty lines.
+ * @param {string} name
+ * @returns {string[]}
+ */
+export function splitLines(name) {
+  const lines = name.split('\n');
+  // Remove trailing empty lines
+  while (lines.length > 1 && lines[lines.length - 1].trim() === '') {
+    lines.pop();
+  }
+  return lines;
+}
+
+/**
  * Calculate auto font size based on character count.
+ * For multiline text, uses the longest line's length.
  * @param {string} name
  * @returns {number}
  */
 export function autoFontSize(name) {
-  const len = name.length;
+  const lines = splitLines(name);
+  const len = Math.max(...lines.map(l => l.length));
   if (len <= 2) return 80;
   if (len <= 3) return 72;
   if (len <= 4) return 60;
@@ -38,24 +62,60 @@ export function autoFontSize(name) {
  */
 export function pillLayout(name, width, config = {}, height) {
   const h = height ?? width;
-  const escaped = escapeXml(name);
+  const lines = splitLines(name);
   const fontSize = config.fontSize || autoFontSize(name);
+  const fontFamily = config.fontFamily || DEFAULT_FONT_FAMILY;
+  const fontWeight = config.fontWeight || 600;
+  const letterSpacing = config.letterSpacing ?? 2;
+  const lineHeightMul = config.lineHeight || 1.4;
   const bgColor = config.pill?.bgColor || 'rgba(255,255,255,0.88)';
-  const textColor = config.pill?.textColor || '#333333';
+  const textColor = config.textColor || config.pill?.textColor || '#333333';
   const borderRadius = config.pill?.borderRadius || 28;
   const paddingX = config.pill?.paddingX || 40;
   const paddingY = config.pill?.paddingY || 16;
 
-  const charWidth = fontSize * 1.1;
-  const pillWidth = name.length * charWidth + paddingX * 2;
-  const pillHeight = fontSize + paddingY * 2;
+  // Measure longest line width
+  const longestLine = lines.reduce((a, b) => a.length > b.length ? a : b, '');
+  let textWidth;
+  if (config.font) {
+    textWidth = config.font.getAdvanceWidth(longestLine, fontSize) + letterSpacing * (longestLine.length - 1);
+  } else {
+    textWidth = longestLine.length * fontSize * 1.1;
+  }
+
+  const lineHeight = fontSize * lineHeightMul;
+  const textBlockHeight = fontSize + (lines.length - 1) * lineHeight;
+  const pillWidth = textWidth + paddingX * 2;
+  const pillHeight = textBlockHeight + paddingY * 2;
   const pillX = (width - pillWidth) / 2;
   const pillY = (h - pillHeight) / 2;
-  const textY = pillY + pillHeight / 2 + fontSize * 0.35;
+  const firstLineY = pillY + paddingY + fontSize * 0.85;
+
+  let textContent;
+  if (lines.length === 1) {
+    textContent = escapeXml(lines[0]);
+  } else {
+    textContent = lines.map((line, i) => {
+      if (i === 0) return `<tspan x="${width / 2}" dy="0">${escapeXml(line)}</tspan>`;
+      return `<tspan x="${width / 2}" dy="${lineHeight}">${escapeXml(line)}</tspan>`;
+    }).join('');
+  }
+
+  const rectSvg = `<rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillHeight}" rx="${borderRadius}" fill="${bgColor}"/>`;
+
+  if (config.outline && config.font) {
+    const pathElements = lines.map((line, i) => {
+      const lineY = firstLineY + i * lineHeight;
+      return textToPath(line, config.font, fontSize, width / 2, lineY, {
+        textAnchor: 'middle', letterSpacing, fill: textColor,
+      });
+    }).join('\n  ');
+    return `\n  ${rectSvg}\n  ${pathElements}`;
+  }
 
   return `
-  <rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillHeight}" rx="${borderRadius}" fill="${bgColor}"/>
-  <text x="${width / 2}" y="${textY}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="600" fill="${textColor}" letter-spacing="2">${escaped}</text>`;
+  ${rectSvg}
+  <text x="${width / 2}" y="${firstLineY}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" letter-spacing="${letterSpacing}">${textContent}</text>`;
 }
 
 /**
@@ -69,22 +129,50 @@ export function pillLayout(name, width, config = {}, height) {
  */
 export function overlayLayout(name, width, config = {}, height) {
   const h = height ?? width;
-  const escaped = escapeXml(name);
+  const lines = splitLines(name);
   const fontSize = config.fontSize || autoFontSize(name) * 1.3;
-  const textColor = config.overlay?.textColor || '#ffffff';
+  const fontFamily = config.fontFamily || DEFAULT_FONT_FAMILY;
+  const fontWeight = config.fontWeight || 700;
+  const letterSpacing = config.letterSpacing ?? 4;
+  const lineHeightMul = config.lineHeight || 1.4;
+  const textColor = config.textColor || config.overlay?.textColor || '#ffffff';
   const shadowColor = config.overlay?.shadowColor || 'rgba(0,0,0,0.3)';
   const shadowBlur = config.overlay?.shadowBlur || 8;
 
   const filterId = 'text-shadow';
-  const textY = h / 2 + fontSize * 0.35;
+  const lineHeight = fontSize * lineHeightMul;
+  const textBlockHeight = fontSize + (lines.length - 1) * lineHeight;
+  const firstLineY = h / 2 - textBlockHeight / 2 + fontSize * 0.85;
 
-  return `
+  let textContent;
+  if (lines.length === 1) {
+    textContent = escapeXml(lines[0]);
+  } else {
+    textContent = lines.map((line, i) => {
+      if (i === 0) return `<tspan x="${width / 2}" dy="0">${escapeXml(line)}</tspan>`;
+      return `<tspan x="${width / 2}" dy="${lineHeight}">${escapeXml(line)}</tspan>`;
+    }).join('');
+  }
+
+  const filterDefs = `
   <defs>
     <filter id="${filterId}" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="2" stdDeviation="${shadowBlur}" flood-color="${shadowColor}"/>
     </filter>
-  </defs>
-  <text x="${width / 2}" y="${textY}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="700" fill="${textColor}" filter="url(#${filterId})" letter-spacing="4">${escaped}</text>`;
+  </defs>`;
+
+  if (config.outline && config.font) {
+    const pathElements = lines.map((line, i) => {
+      const lineY = firstLineY + i * lineHeight;
+      return textToPath(line, config.font, fontSize, width / 2, lineY, {
+        textAnchor: 'middle', letterSpacing, fill: textColor, filter: `url(#${filterId})`,
+      });
+    }).join('\n  ');
+    return `${filterDefs}\n  ${pathElements}`;
+  }
+
+  return `${filterDefs}
+  <text x="${width / 2}" y="${firstLineY}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" filter="url(#${filterId})" letter-spacing="${letterSpacing}">${textContent}</text>`;
 }
 
 /**
@@ -99,25 +187,58 @@ export function overlayLayout(name, width, config = {}, height) {
  */
 export function verticalLayout(name, width, config = {}, height) {
   const h = height ?? width;
+  const lines = splitLines(name);
   const fontSize = config.fontSize || autoFontSize(name) * 0.9;
-  const chars = [...name];
-  const lineHeight = fontSize * 1.4;
-  const totalHeight = chars.length * lineHeight;
+  const fontFamily = config.fontFamily || DEFAULT_FONT_FAMILY;
+  const fontWeight = config.fontWeight || 600;
+  const textColor = config.textColor || '#ffffff';
+  const charLineHeight = fontSize * (config.lineHeight || 1.4);
+  const colSpacing = fontSize * 1.6;
+
+  // Each line becomes a vertical column, laid out right-to-left (traditional CJK)
+  const columns = lines.map(line => [...line]);
+  const numCols = columns.length;
+  const longestCol = Math.max(...columns.map(c => c.length));
+  const totalHeight = longestCol * charLineHeight;
+  const totalWidth = numCols > 1 ? (numCols - 1) * colSpacing : 0;
   const startY = (h - totalHeight) / 2 + fontSize;
-  const x = width / 2;
+  const startX = width / 2 + totalWidth / 2; // rightmost column starts here
 
-  const charElements = chars.map((char, i) => {
-    const y = startY + i * lineHeight;
-    return `<text x="${x}" y="${y}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="600" fill="#ffffff" filter="url(#v-shadow)">${escapeXml(char)}</text>`;
-  }).join('\n  ');
-
-  return `
+  const filterDefs = `
   <defs>
     <filter id="v-shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="1" stdDeviation="4" flood-color="rgba(0,0,0,0.3)"/>
     </filter>
-  </defs>
-  ${charElements}`;
+  </defs>`;
+
+  if (config.outline && config.font) {
+    const pathElements = [];
+    columns.forEach((chars, colIdx) => {
+      const x = startX - colIdx * colSpacing;
+      chars.forEach((char, charIdx) => {
+        const y = startY + charIdx * charLineHeight;
+        pathElements.push(
+          textToPath(char, config.font, fontSize, x, y, {
+            textAnchor: 'middle', fill: textColor, filter: 'url(#v-shadow)',
+          })
+        );
+      });
+    });
+    return `${filterDefs}\n  ${pathElements.join('\n  ')}`;
+  }
+
+  const charElements = [];
+  columns.forEach((chars, colIdx) => {
+    const x = startX - colIdx * colSpacing;
+    chars.forEach((char, charIdx) => {
+      const y = startY + charIdx * charLineHeight;
+      charElements.push(
+        `<text x="${x}" y="${y}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" filter="url(#v-shadow)">${escapeXml(char)}</text>`
+      );
+    });
+  });
+
+  return `${filterDefs}\n  ${charElements.join('\n  ')}`;
 }
 
 /**
@@ -133,9 +254,14 @@ export function verticalLayout(name, width, config = {}, height) {
  */
 export function artisticLayout(name, width, config = {}, rng, height) {
   const h = height ?? width;
-  const chars = [...name];
+  // Strip newlines — artistic mode scatters all characters regardless of lines
+  const flatName = name.replace(/\n/g, '');
+  const chars = [...flatName];
   const len = chars.length;
-  const baseFontSize = config.fontSize || autoFontSize(name);
+  const baseFontSize = config.fontSize || autoFontSize(flatName);
+  const fontFamily = config.fontFamily || DEFAULT_FONT_FAMILY;
+  const fontWeight = config.fontWeight || 700;
+  const textColor = config.textColor || '#ffffff';
 
   // Grid layout: determine rows and columns
   let cols, rows;
@@ -156,33 +282,39 @@ export function artisticLayout(name, width, config = {}, rng, height) {
   // Use rng for randomization, or fallback to deterministic positions
   const rand = rng || (() => 0.5);
 
+  const filterDefs = `
+  <defs>
+    <filter id="a-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="rgba(0,0,0,0.25)"/>
+    </filter>
+  </defs>`;
+
   const charElements = chars.map((char, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
     const centerX = gridStartX + col * cellW + cellW / 2;
     const centerY = gridStartY + row * cellH + cellH / 2;
 
-    // Random offset within cell (±20% of cell size)
     const offsetX = randomRange(-cellW * 0.15, cellW * 0.15, rand);
     const offsetY = randomRange(-cellH * 0.1, cellH * 0.1, rand);
 
-    // Random font size variation (±25%)
     const sizeVariation = randomRange(0.8, 1.25, rand);
     const fontSize = Math.round(baseFontSize * sizeVariation);
 
     const x = centerX + offsetX;
     const y = centerY + offsetY + fontSize * 0.35;
+    const opacity = randomRange(0.85, 1, rand).toFixed(2);
 
-    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-family='${FONT_FAMILY}' font-size="${fontSize}" font-weight="700" fill="#ffffff" opacity="${randomRange(0.85, 1, rand).toFixed(2)}" filter="url(#a-shadow)">${escapeXml(char)}</text>`;
+    if (config.outline && config.font) {
+      return textToPath(char, config.font, fontSize, x, y, {
+        textAnchor: 'middle', fill: textColor, opacity, filter: 'url(#a-shadow)',
+      });
+    }
+
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" opacity="${opacity}" filter="url(#a-shadow)">${escapeXml(char)}</text>`;
   }).join('\n  ');
 
-  return `
-  <defs>
-    <filter id="a-shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="rgba(0,0,0,0.25)"/>
-    </filter>
-  </defs>
-  ${charElements}`;
+  return `${filterDefs}\n  ${charElements}`;
 }
 
 /**

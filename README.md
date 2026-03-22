@@ -9,13 +9,21 @@
 ## 特性
 
 - **SVG 矢量输出** — 每个文件仅 ~4KB，无限缩放，浏览器直接渲染
-- **多分辨率 PNG 导出** — 支持 1K/HD/2K/4K/8K 分辨率预设
+- **文字转轮廓** — 导出时可将文字转为 SVG `<path>`，不依赖字体（类似 Illustrator "创建轮廓"）
+- **多行文本** — 支持换行输入，各布局模式智能适配多行
+- **多分辨率 PNG 导出** — 支持 1K/HD/2K/4K/8K 分辨率预设，默认 4K
 - **15+ 场景预设** — 电商主图、公众号封面、小红书、抖音、PPT、海报、壁纸等
 - **12 套预设配色** — 含 4 套柔和粉彩配色（peach/mint/aurora/blush）
-- **5 种文字样式** — 胶囊标签 / 大字叠加 / 竖排 / 拆字艺术 / 纯渐变（无文字）
+- **4 种文字样式** — 胶囊标签 / 大字叠加 / 竖排 / 纯渐变（无文字）
+- **噪声纹理分级** — 关闭 / 低 / 中 / 高 四档可调，默认中等
+- **深色 / 浅色主题** — 自动跟随系统偏好，可手动切换
+- **5 种语言** — 简体中文 / 繁體中文 / English / 日本語 / 한국어
+- **多语言字体** — 阿里巴巴普惠体 3.0 (SC) / Sans HK / Sans JP / Sans KR 按语言自动切换
+- **自定义字体** — 支持上传 TTF/OTF 字体文件
+- **文字排版控制** — 字号、字重、字间距、行间距、文字颜色可调
 - **任意宽高比** — 支持矩形画布，预设或自定义 width/height
 - **可复现** — 相同种子 + 配置 = 完全一致的输出
-- **交互式 Web 预览** — 实时调参，所见即所得
+- **交互式 Web 预览** — Tab 分组面板，实时调参，所见即所得
 - **OKLCH 颜色科学** — 感知均匀的颜色插值，告别 RGB 的灰暗中间色
 - **共享核心架构** — CLI 和 Web 复用同一份渐变/排版代码
 
@@ -37,6 +45,9 @@ node generate.js --name "产品设计部" --palette creative --text-style overla
 # 使用场景预设 + 分辨率预设
 node generate.js --name "技术研发中心" --preset banner-wide --resolution 4k --png
 
+# 文字转轮廓导出
+node generate.js --name "设计部" --font-path web/public/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2 --outline
+
 # 列出所有可用预设
 node generate.js --list-presets
 
@@ -44,8 +55,7 @@ node generate.js --list-presets
 node generate.js --name "技术研发中心" --png
 
 # 启动 Web 预览
-npm run preview
-# 然后打开 http://localhost:3000/web/index.html
+npm run dev
 ```
 
 ## 命令行选项
@@ -53,11 +63,11 @@ npm run preview
 | 选项 | 说明 | 默认值 |
 |------|------|--------|
 | `-i, --input <path>` | 输入文件（JSON/CSV/TXT） | — |
-| `-n, --name <name>` | 单条文本 | — |
+| `-n, --name <name>` | 单条文本（支持 `\n` 换行） | — |
 | `-o, --output <dir>` | 输出目录 | `./output` |
 | `-p, --palette <name>` | 配色方案 | `warm` |
 | `-t, --text-style <style>` | 文字样式 | `pill` |
-| `-l, --layers <n>` | 渐变层数（1-30） | `8` |
+| `-l, --layers <n>` | 渐变层数（1-30） | `12` |
 | `--blur <n>` | 模糊程度（0-50） | `3` |
 | `--noise` | 启用噪声纹理 | `false` |
 | `--saturation <n>` | 饱和度 % | `130` |
@@ -66,6 +76,8 @@ npm run preview
 | `--resolution <name>` | 分辨率预设（standard/hd/2k/4k/8k） | `standard` |
 | `--width <n>` | 自定义画布宽度 | — |
 | `--height <n>` | 自定义画布高度 | — |
+| `--font-path <path>` | 字体文件路径（TTF/OTF/WOFF2） | — |
+| `--outline` | 将文字转为轮廓路径（需配合 --font-path） | `false` |
 | `--png` | 同时导出 PNG | `false` |
 | `--png-size <n>` | PNG 尺寸（像素） | `1024` |
 | `--list-presets` | 列出所有可用预设 | — |
@@ -120,15 +132,18 @@ npm run preview   # 预览构建产物
 ```
 
 打开 `http://localhost:3000/`，可以：
-- 输入文本，实时预览渐变效果
-- 切换配色方案和文字样式
+- 输入文本（支持多行），实时预览渐变效果
+- 切换配色方案和文字样式（胶囊/叠加/竖排/无文字）
 - 调节渐变层数、饱和度、模糊等参数
-- 选择场景预设和导出分辨率
+- 选择噪声纹理强度（关闭/低/中/高）
+- 选择场景预设和导出分辨率（显示实际像素尺寸）
+- 加载自定义字体，开启文字轮廓化导出
+- 切换深色/浅色主题，切换界面语言
 - 一键下载 SVG 或 PNG
 
 ## 部署
 
-项目已配置 Cloudflare Pages 部署支持。
+项目已配置 Cloudflare Pages 部署支持（含 `_headers` 缓存规则、SPA 路由）。
 
 **GitHub 集成（推荐）：**
 1. Cloudflare Dashboard → Pages → Create project → 连接 GitHub 仓库
@@ -143,26 +158,35 @@ npm run build && npx wrangler pages deploy dist --project-name=radial-stack
 ## 技术架构
 
 ```
-src/core/          ← 纯函数核心（浏览器 + Node.js 共用）
-├── svg-builder.js # SVG 组装（主入口）
-├── gradient.js    # 多层 radialGradient 渐变生成
-├── text-layout.js # 4 种文字排版
-├── palettes.js    # 12 套配色方案
-├── presets.js     # 15+ 场景预设 + 5 档分辨率预设
-├── color-utils.js # OKLCH 色彩空间转换
-└── utils.js       # seedrandom、XML 转义
+src/core/              ← 纯函数核心（浏览器 + Node.js 共用）
+├── svg-builder.js     # SVG 组装（主入口）
+├── gradient.js        # 多层 radialGradient 渐变生成
+├── text-layout.js     # 4 种文字排版 + 多行支持
+├── text-outliner.js   # 文字转 SVG 路径（opentype.js）
+├── palettes.js        # 12 套配色方案
+├── presets.js         # 15+ 场景预设 + 5 档分辨率预设
+├── color-utils.js     # OKLCH 色彩空间转换
+└── utils.js           # seedrandom、XML 转义
 
-src/cli/           ← Node.js CLI 专属
-├── index.js       # 命令行入口
-├── png-export.js  # PNG 导出（含中文字体检测）
-├── file-reader.js # 多格式输入解析
-└── overview.js    # 总览 HTML 生成
+src/cli/               ← Node.js CLI 专属
+├── index.js           # 命令行入口
+├── png-export.js      # PNG 导出（含中文字体检测）
+├── file-reader.js     # 多格式输入解析
+└── overview.js        # 总览 HTML 生成
 
-web/               ← Web 预览界面（Vite 构建）
-├── index.html     # HTML 结构
-├── main.js        # 交互逻辑（import 核心模块）
-├── style.css      # 样式
-└── public/        # 静态资源（_headers, _redirects）
+web/                   ← Web 预览界面（Vite 构建）
+├── index.html         # HTML 结构（Tab 分组面板）
+├── main.js            # 入口 + 预览逻辑
+├── state.js           # 统一状态管理
+├── export.js          # SVG/PNG 导出
+├── i18n.js            # 5 语言国际化
+├── theme.js           # 深色/浅色主题
+├── fonts.js           # 语言字体管理
+├── style.css          # 样式（深浅双主题）
+└── public/
+    ├── fonts/         # WOFF2 字体文件（4 语言 13 个字重）
+    ├── _headers       # Cloudflare Pages 缓存规则
+    └── _redirects     # SPA 路由
 ```
 
 详细架构说明见 [架构文档](docs/architecture.md)。
