@@ -44,7 +44,7 @@ function findCjkFont() {
  * @returns {{ buffer: Buffer, warnings: string[] }}
  */
 export function svgToPng(svgString, options = {}) {
-  const { width = 1024, height = 1024, fontPath } = options;
+  const { width = 1024, height: _height = 1024, fontPath } = options;
   const warnings = [];
 
   const resvgOpts = {
@@ -62,9 +62,9 @@ export function svgToPng(svgString, options = {}) {
   } else {
     warnings.push(
       '⚠ 未找到中文字体文件。PNG 中的中文可能无法正确渲染。\n' +
-      '  macOS: 应该自带 PingFang\n' +
-      '  Linux: 请安装 fonts-noto-cjk\n' +
-      '  或使用 --font-path 指定字体文件路径'
+        '  macOS: 应该自带 PingFang\n' +
+        '  Linux: 请安装 fonts-noto-cjk\n' +
+        '  或使用 --font-path 指定字体文件路径',
     );
   }
 

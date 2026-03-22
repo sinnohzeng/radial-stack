@@ -26,11 +26,13 @@
 - **交互式 Web 预览** — Tab 分组面板，实时调参，所见即所得
 - **OKLCH 颜色科学** — 感知均匀的颜色插值，告别 RGB 的灰暗中间色
 - **共享核心架构** — CLI 和 Web 复用同一份渐变/排版代码
+- **完整 a11y** — ARIA 标注、键盘导航、WCAG AA 对比度达标
+- **响应式布局** — 桌面 / 平板 / 手机三档自适应
 
 ## 快速开始
 
 ```bash
-# 安装依赖
+# 安装依赖（需要 Node.js >= 24）
 npm install
 
 # 生成单张标识图
@@ -175,21 +177,34 @@ src/cli/               ← Node.js CLI 专属
 └── overview.js        # 总览 HTML 生成
 
 web/                   ← Web 预览界面（Vite 构建）
-├── index.html         # HTML 结构（Tab 分组面板）
-├── main.js            # 入口 + 预览逻辑
-├── state.js           # 统一状态管理
+├── index.html         # HTML 结构（Tab 面板 + ARIA 标注）
+├── main.js            # 入口 + 预览 + 事件绑定
+├── state.js           # Proxy 化状态管理
 ├── export.js          # SVG/PNG 导出
-├── i18n.js            # 5 语言国际化
+├── i18n.js            # 5 语言国际化（按需加载）
+├── i18n/              # 独立 locale JSON 文件
+├── utils.js           # debounce 等工具
 ├── theme.js           # 深色/浅色主题
 ├── fonts.js           # 语言字体管理
-├── style.css          # 样式（深浅双主题）
+├── style.css          # 样式（深浅主题 + 响应式）
 └── public/
     ├── fonts/         # WOFF2 字体文件（4 语言 13 个字重）
+    ├── wawoff2-decompress.js  # WOFF2 解压 WASM（本地化）
     ├── _headers       # Cloudflare Pages 缓存规则
     └── _redirects     # SPA 路由
 ```
 
 详细架构说明见 [架构文档](docs/architecture.md)。
+
+## 工程化
+
+| 工具 | 用途 | 命令 |
+|------|------|------|
+| ESLint 10 | 代码检查（flat config） | `npm run lint` |
+| Prettier | 代码格式化 | `npm run format` |
+| Vitest 4 | 单元测试 + 快照测试 | `npm test` |
+| GitHub Actions | CI（push 触发 lint + test） | 自动 |
+| Cloudflare Pages | CD（连接 GitHub 自动部署） | 自动 |
 
 ## 文档
 
@@ -200,6 +215,7 @@ web/                   ← Web 预览界面（Vite 构建）
 | [API 参考](docs/api-reference.md) | 核心模块的程序化调用方式 |
 | [故障排除](docs/troubleshooting.md) | 常见问题与解决方案 |
 | [贡献指南](docs/contributing.md) | 开发环境、代码规范、如何贡献 |
+| [变更日志](CHANGELOG.md) | 版本历史与变更记录 |
 
 ## 测试
 
@@ -208,7 +224,7 @@ npm test          # 运行全部测试
 npm run test:watch  # 监视模式
 ```
 
-项目包含 204 个单元测试，覆盖渐变生成、文字排版、配色方案、颜色转换、XML 转义和可复现性。
+项目包含 208 个测试，覆盖渐变生成、文字排版、配色方案、颜色转换、XML 转义、可复现性和 SVG 快照回归。
 
 ## 灵感来源
 

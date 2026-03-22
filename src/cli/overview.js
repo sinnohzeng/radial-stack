@@ -19,15 +19,18 @@
  */
 export function generateOverviewHTML(items, meta = {}) {
   const timestamp = new Date().toLocaleString('zh-CN');
-  const cards = items.map((item) => `
+  const cards = items
+    .map(
+      (item) => `
       <div class="card">
         <div class="card-svg">${item.svg}</div>
         <div class="card-info">
           <span class="card-name">${escapeHTML(item.name)}</span>
           <span class="card-palette">${escapeHTML(item.palette)}</span>
         </div>
-      </div>`
-  ).join('');
+      </div>`,
+    )
+    .join('');
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -70,5 +73,9 @@ export function generateOverviewHTML(items, meta = {}) {
  * @returns {string}
  */
 function escapeHTML(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

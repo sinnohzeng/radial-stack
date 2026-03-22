@@ -2,7 +2,12 @@
 import { escapeXml, randomRange } from './utils.js';
 import { textToPath } from './text-outliner.js';
 
-const DEFAULT_FONT_FAMILY = '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif';
+const DEFAULT_FONT_FAMILY =
+  '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif';
+
+// Default layout constants
+const PILL_DEFAULTS = { borderRadius: 28, paddingX: 40, paddingY: 16 };
+const VERTICAL_COL_SPACING_RATIO = 1.6;
 
 /**
  * @typedef {Object} TextConfig
@@ -40,7 +45,7 @@ export function splitLines(name) {
  */
 export function autoFontSize(name) {
   const lines = splitLines(name);
-  const len = Math.max(...lines.map(l => l.length));
+  const len = Math.max(...lines.map((l) => l.length));
   if (len <= 2) return 80;
   if (len <= 3) return 72;
   if (len <= 4) return 60;
@@ -70,15 +75,16 @@ export function pillLayout(name, width, config = {}, height) {
   const lineHeightMul = config.lineHeight || 1.4;
   const bgColor = config.pill?.bgColor || 'rgba(255,255,255,0.88)';
   const textColor = config.textColor || config.pill?.textColor || '#333333';
-  const borderRadius = config.pill?.borderRadius || 28;
-  const paddingX = config.pill?.paddingX || 40;
-  const paddingY = config.pill?.paddingY || 16;
+  const borderRadius = config.pill?.borderRadius || PILL_DEFAULTS.borderRadius;
+  const paddingX = config.pill?.paddingX || PILL_DEFAULTS.paddingX;
+  const paddingY = config.pill?.paddingY || PILL_DEFAULTS.paddingY;
 
   // Measure longest line width
-  const longestLine = lines.reduce((a, b) => a.length > b.length ? a : b, '');
+  const longestLine = lines.reduce((a, b) => (a.length > b.length ? a : b), '');
   let textWidth;
   if (config.font) {
-    textWidth = config.font.getAdvanceWidth(longestLine, fontSize) + letterSpacing * (longestLine.length - 1);
+    textWidth =
+      config.font.getAdvanceWidth(longestLine, fontSize) + letterSpacing * (longestLine.length - 1);
   } else {
     textWidth = longestLine.length * fontSize * 1.1;
   }
@@ -95,21 +101,27 @@ export function pillLayout(name, width, config = {}, height) {
   if (lines.length === 1) {
     textContent = escapeXml(lines[0]);
   } else {
-    textContent = lines.map((line, i) => {
-      if (i === 0) return `<tspan x="${width / 2}" dy="0">${escapeXml(line)}</tspan>`;
-      return `<tspan x="${width / 2}" dy="${lineHeight}">${escapeXml(line)}</tspan>`;
-    }).join('');
+    textContent = lines
+      .map((line, i) => {
+        if (i === 0) return `<tspan x="${width / 2}" dy="0">${escapeXml(line)}</tspan>`;
+        return `<tspan x="${width / 2}" dy="${lineHeight}">${escapeXml(line)}</tspan>`;
+      })
+      .join('');
   }
 
   const rectSvg = `<rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillHeight}" rx="${borderRadius}" fill="${bgColor}"/>`;
 
   if (config.outline && config.font) {
-    const pathElements = lines.map((line, i) => {
-      const lineY = firstLineY + i * lineHeight;
-      return textToPath(line, config.font, fontSize, width / 2, lineY, {
-        textAnchor: 'middle', letterSpacing, fill: textColor,
-      });
-    }).join('\n  ');
+    const pathElements = lines
+      .map((line, i) => {
+        const lineY = firstLineY + i * lineHeight;
+        return textToPath(line, config.font, fontSize, width / 2, lineY, {
+          textAnchor: 'middle',
+          letterSpacing,
+          fill: textColor,
+        });
+      })
+      .join('\n  ');
     return `\n  ${rectSvg}\n  ${pathElements}`;
   }
 
@@ -148,10 +160,12 @@ export function overlayLayout(name, width, config = {}, height) {
   if (lines.length === 1) {
     textContent = escapeXml(lines[0]);
   } else {
-    textContent = lines.map((line, i) => {
-      if (i === 0) return `<tspan x="${width / 2}" dy="0">${escapeXml(line)}</tspan>`;
-      return `<tspan x="${width / 2}" dy="${lineHeight}">${escapeXml(line)}</tspan>`;
-    }).join('');
+    textContent = lines
+      .map((line, i) => {
+        if (i === 0) return `<tspan x="${width / 2}" dy="0">${escapeXml(line)}</tspan>`;
+        return `<tspan x="${width / 2}" dy="${lineHeight}">${escapeXml(line)}</tspan>`;
+      })
+      .join('');
   }
 
   const filterDefs = `
@@ -162,12 +176,17 @@ export function overlayLayout(name, width, config = {}, height) {
   </defs>`;
 
   if (config.outline && config.font) {
-    const pathElements = lines.map((line, i) => {
-      const lineY = firstLineY + i * lineHeight;
-      return textToPath(line, config.font, fontSize, width / 2, lineY, {
-        textAnchor: 'middle', letterSpacing, fill: textColor, filter: `url(#${filterId})`,
-      });
-    }).join('\n  ');
+    const pathElements = lines
+      .map((line, i) => {
+        const lineY = firstLineY + i * lineHeight;
+        return textToPath(line, config.font, fontSize, width / 2, lineY, {
+          textAnchor: 'middle',
+          letterSpacing,
+          fill: textColor,
+          filter: `url(#${filterId})`,
+        });
+      })
+      .join('\n  ');
     return `${filterDefs}\n  ${pathElements}`;
   }
 
@@ -193,12 +212,12 @@ export function verticalLayout(name, width, config = {}, height) {
   const fontWeight = config.fontWeight || 600;
   const textColor = config.textColor || '#ffffff';
   const charLineHeight = fontSize * (config.lineHeight || 1.4);
-  const colSpacing = fontSize * 1.6;
+  const colSpacing = fontSize * VERTICAL_COL_SPACING_RATIO;
 
   // Each line becomes a vertical column, laid out right-to-left (traditional CJK)
-  const columns = lines.map(line => [...line]);
+  const columns = lines.map((line) => [...line]);
   const numCols = columns.length;
-  const longestCol = Math.max(...columns.map(c => c.length));
+  const longestCol = Math.max(...columns.map((c) => c.length));
   const totalHeight = longestCol * charLineHeight;
   const totalWidth = numCols > 1 ? (numCols - 1) * colSpacing : 0;
   const startY = (h - totalHeight) / 2 + fontSize;
@@ -219,8 +238,10 @@ export function verticalLayout(name, width, config = {}, height) {
         const y = startY + charIdx * charLineHeight;
         pathElements.push(
           textToPath(char, config.font, fontSize, x, y, {
-            textAnchor: 'middle', fill: textColor, filter: 'url(#v-shadow)',
-          })
+            textAnchor: 'middle',
+            fill: textColor,
+            filter: 'url(#v-shadow)',
+          }),
         );
       });
     });
@@ -233,7 +254,7 @@ export function verticalLayout(name, width, config = {}, height) {
     chars.forEach((char, charIdx) => {
       const y = startY + charIdx * charLineHeight;
       charElements.push(
-        `<text x="${x}" y="${y}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" filter="url(#v-shadow)">${escapeXml(char)}</text>`
+        `<text x="${x}" y="${y}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" filter="url(#v-shadow)">${escapeXml(char)}</text>`,
       );
     });
   });
@@ -265,10 +286,19 @@ export function artisticLayout(name, width, config = {}, rng, height) {
 
   // Grid layout: determine rows and columns
   let cols, rows;
-  if (len <= 2) { cols = 2; rows = 1; }
-  else if (len <= 4) { cols = 2; rows = Math.ceil(len / 2); }
-  else if (len <= 6) { cols = 3; rows = Math.ceil(len / 3); }
-  else { cols = 3; rows = Math.ceil(len / 3); }
+  if (len <= 2) {
+    cols = 2;
+    rows = 1;
+  } else if (len <= 4) {
+    cols = 2;
+    rows = Math.ceil(len / 2);
+  } else if (len <= 6) {
+    cols = 3;
+    rows = Math.ceil(len / 3);
+  } else {
+    cols = 3;
+    rows = Math.ceil(len / 3);
+  }
 
   const marginX = width * 0.15;
   const marginY = h * 0.15;
@@ -289,30 +319,35 @@ export function artisticLayout(name, width, config = {}, rng, height) {
     </filter>
   </defs>`;
 
-  const charElements = chars.map((char, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const centerX = gridStartX + col * cellW + cellW / 2;
-    const centerY = gridStartY + row * cellH + cellH / 2;
+  const charElements = chars
+    .map((char, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const centerX = gridStartX + col * cellW + cellW / 2;
+      const centerY = gridStartY + row * cellH + cellH / 2;
 
-    const offsetX = randomRange(-cellW * 0.15, cellW * 0.15, rand);
-    const offsetY = randomRange(-cellH * 0.1, cellH * 0.1, rand);
+      const offsetX = randomRange(-cellW * 0.15, cellW * 0.15, rand);
+      const offsetY = randomRange(-cellH * 0.1, cellH * 0.1, rand);
 
-    const sizeVariation = randomRange(0.8, 1.25, rand);
-    const fontSize = Math.round(baseFontSize * sizeVariation);
+      const sizeVariation = randomRange(0.8, 1.25, rand);
+      const fontSize = Math.round(baseFontSize * sizeVariation);
 
-    const x = centerX + offsetX;
-    const y = centerY + offsetY + fontSize * 0.35;
-    const opacity = randomRange(0.85, 1, rand).toFixed(2);
+      const x = centerX + offsetX;
+      const y = centerY + offsetY + fontSize * 0.35;
+      const opacity = randomRange(0.85, 1, rand).toFixed(2);
 
-    if (config.outline && config.font) {
-      return textToPath(char, config.font, fontSize, x, y, {
-        textAnchor: 'middle', fill: textColor, opacity, filter: 'url(#a-shadow)',
-      });
-    }
+      if (config.outline && config.font) {
+        return textToPath(char, config.font, fontSize, x, y, {
+          textAnchor: 'middle',
+          fill: textColor,
+          opacity,
+          filter: 'url(#a-shadow)',
+        });
+      }
 
-    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" opacity="${opacity}" filter="url(#a-shadow)">${escapeXml(char)}</text>`;
-  }).join('\n  ');
+      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-family='${fontFamily}' font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" opacity="${opacity}" filter="url(#a-shadow)">${escapeXml(char)}</text>`;
+    })
+    .join('\n  ');
 
   return `${filterDefs}\n  ${charElements}`;
 }
@@ -329,11 +364,17 @@ export function artisticLayout(name, width, config = {}, rng, height) {
  */
 export function layoutText(style, name, width, config = {}, rng, height) {
   switch (style) {
-    case 'none': return '';
-    case 'pill': return pillLayout(name, width, config, height);
-    case 'overlay': return overlayLayout(name, width, config, height);
-    case 'vertical': return verticalLayout(name, width, config, height);
-    case 'artistic': return artisticLayout(name, width, config, rng, height);
-    default: return pillLayout(name, width, config, height);
+    case 'none':
+      return '';
+    case 'pill':
+      return pillLayout(name, width, config, height);
+    case 'overlay':
+      return overlayLayout(name, width, config, height);
+    case 'vertical':
+      return verticalLayout(name, width, config, height);
+    case 'artistic':
+      return artisticLayout(name, width, config, rng, height);
+    default:
+      return pillLayout(name, width, config, height);
   }
 }

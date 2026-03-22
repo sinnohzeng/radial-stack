@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { buildSVG } from '../src/core/svg-builder.js';
 import { getScenePreset, getResolutionPreset, computeExportSize } from '../src/core/presets.js';
+import { t } from './i18n.js';
 
 export function downloadBlob(blob, filename) {
   const a = document.createElement('a');
@@ -17,7 +18,7 @@ export function downloadSVG() {
     svg = buildSVG({ ...state.currentOptions, outline: true, font: state.fontObj });
   }
   const blob = new Blob([svg], { type: 'image/svg+xml' });
-  downloadBlob(blob, (state.lastName || '渐变') + '.svg');
+  downloadBlob(blob, (state.lastName || t('file.default_name')) + '.svg');
 }
 
 export function downloadPNG() {
@@ -45,11 +46,22 @@ export function downloadPNG() {
     canvas.height = pngH;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, pngW, pngH);
-    canvas.toBlob(blob => {
-      const resLabel = state.resolution !== 'standard' ? '_' + state.resolution : '';
-      downloadBlob(blob, (state.lastName || '渐变') + resLabel + '.png');
-      URL.revokeObjectURL(url);
-    }, 'image/png');
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        const resLabel = state.resolution !== 'standard' ? '_' + state.resolution : '';
+        downloadBlob(blob, (state.lastName || t('file.default_name')) + resLabel + '.png');
+        URL.revokeObjectURL(url);
+      },
+      'image/png',
+    );
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    console.error('Failed to render SVG to image for PNG export');
   };
   img.src = url;
 }

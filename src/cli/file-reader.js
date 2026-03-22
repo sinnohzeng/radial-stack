@@ -88,11 +88,14 @@ function parseTXT(content) {
  * @returns {DepartmentEntry[]}
  */
 function parseCSV(content) {
-  const lines = content.split('\n').map((l) => l.trim()).filter(Boolean);
+  const lines = content
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
 
   // Skip header if it looks like one
   const firstLine = lines[0].toLowerCase();
-  const startIndex = (firstLine.includes('name') || firstLine.includes('部门')) ? 1 : 0;
+  const startIndex = firstLine.includes('name') || firstLine.includes('部门') ? 1 : 0;
 
   return lines.slice(startIndex).map((line) => {
     const parts = line.split(',').map((p) => p.trim().replace(/^["']|["']$/g, ''));

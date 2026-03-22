@@ -1,7 +1,26 @@
 import { describe, it, expect } from 'vitest';
-import { getPalette, getAllPaletteNames, getAllPalettes, resolvePalette, hintToPaletteName } from '../src/core/palettes.js';
+import {
+  getPalette,
+  getAllPaletteNames,
+  getAllPalettes,
+  resolvePalette,
+  hintToPaletteName,
+} from '../src/core/palettes.js';
 
-const EXPECTED_PALETTES = ['warm', 'cool', 'sunset', 'forest', 'ocean', 'creative', 'tech', 'elegant', 'peach', 'mint', 'aurora', 'blush'];
+const EXPECTED_PALETTES = [
+  'warm',
+  'cool',
+  'sunset',
+  'forest',
+  'ocean',
+  'creative',
+  'tech',
+  'elegant',
+  'peach',
+  'mint',
+  'aurora',
+  'blush',
+];
 
 describe('getAllPaletteNames', () => {
   it('returns exactly 12 palette names', () => {

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { hexToOklch, oklchToHex, interpolateColors, midpointColor } from '../src/core/color-utils.js';
+import {
+  hexToOklch,
+  oklchToHex,
+  interpolateColors,
+  midpointColor,
+} from '../src/core/color-utils.js';
 
 describe('hexToOklch', () => {
   it('converts a hex color to OKLCH with l, c, h properties', () => {

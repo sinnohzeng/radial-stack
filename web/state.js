@@ -1,7 +1,25 @@
-const DEFAULT_FONT_FAMILY = '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif';
+const DEFAULT_FONT_FAMILY =
+  '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif';
 const BUILTIN_FONT_FAMILY = '"Alibaba PuHuiTi 3", ' + DEFAULT_FONT_FAMILY;
 
-export const state = {
+function createState(initial) {
+  const listeners = new Set();
+  const proxy = new Proxy(initial, {
+    set(target, key, value) {
+      const old = target[key];
+      target[key] = value;
+      if (old !== value) listeners.forEach((fn) => fn(key, value, old));
+      return true;
+    },
+  });
+  proxy.onChange = (fn) => {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  };
+  return proxy;
+}
+
+export const state = createState({
   palette: 'warm',
   textStyle: 'pill',
   preset: 'square',
@@ -16,6 +34,6 @@ export const state = {
   lastSVG: '',
   lastName: '',
   currentOptions: {},
-};
+});
 
 export { DEFAULT_FONT_FAMILY, BUILTIN_FONT_FAMILY };

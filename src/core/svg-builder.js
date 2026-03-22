@@ -1,7 +1,11 @@
 // @ts-check
 import { createRng, hashString } from './utils.js';
 import { resolvePalette } from './palettes.js';
-import { generateGradientDefs, generateGradientStyles, generateGradientLayers } from './gradient.js';
+import {
+  generateGradientDefs,
+  generateGradientStyles,
+  generateGradientLayers,
+} from './gradient.js';
 import { layoutText } from './text-layout.js';
 
 /**
@@ -81,9 +85,7 @@ export function buildSVG(options) {
   const rng = createRng(rngSeed);
 
   // Generate gradient definitions
-  const { defs: gradientDefs, gradientIds } = generateGradientDefs(
-    palette.colors, rng, layers
-  );
+  const { defs: gradientDefs, gradientIds } = generateGradientDefs(palette.colors, rng, layers);
 
   // Generate styles
   const styles = generateGradientStyles(palette.background, gradientIds);
@@ -95,7 +97,18 @@ export function buildSVG(options) {
   const filters = buildFilters(blur, noise, noiseFrequency);
 
   // Generate text layout
-  const textConfig = { fontSize, fontWeight, letterSpacing, lineHeight, textColor, fontFamily, font, outline, pill, overlay };
+  const textConfig = {
+    fontSize,
+    fontWeight,
+    letterSpacing,
+    lineHeight,
+    textColor,
+    fontFamily,
+    font,
+    outline,
+    pill,
+    overlay,
+  };
   const textElements = layoutText(textStyle, name, w, textConfig, rng, h);
 
   // Generate decorations
@@ -136,14 +149,14 @@ function buildFilters(blur, noise, noiseFrequency = 0.65) {
 
   if (blur > 0) {
     filterParts.push(
-      `<feGaussianBlur in="SourceGraphic" stdDeviation="${blur}" result="blurred"/>`
+      `<feGaussianBlur in="SourceGraphic" stdDeviation="${blur}" result="blurred"/>`,
     );
   }
 
   if (noise) {
     filterParts.push(
       `<feTurbulence type="fractalNoise" baseFrequency="${noiseFrequency}" numOctaves="3" result="noise"/>`,
-      `<feBlend in="${blur ? 'blurred' : 'SourceGraphic'}" in2="noise" mode="soft-light"/>`
+      `<feBlend in="${blur ? 'blurred' : 'SourceGraphic'}" in2="noise" mode="soft-light"/>`,
     );
   }
 
@@ -169,14 +182,14 @@ function buildDecorations(decorations, width, height) {
     const borderColor = decorations.borderColor || 'rgba(255,255,255,0.1)';
     const borderWidth = decorations.borderWidth || 0.5;
     parts.push(
-      `<rect x="${borderWidth / 2}" y="${borderWidth / 2}" width="${w - borderWidth}" height="${h - borderWidth}" fill="none" stroke="${borderColor}" stroke-width="${borderWidth}"/>`
+      `<rect x="${borderWidth / 2}" y="${borderWidth / 2}" width="${w - borderWidth}" height="${h - borderWidth}" fill="none" stroke="${borderColor}" stroke-width="${borderWidth}"/>`,
     );
   }
 
   // Corner badge
   if (decorations.cornerBadge) {
     parts.push(
-      `<text x="${w - 30}" y="35" text-anchor="end" font-family="monospace" font-size="18" fill="rgba(255,255,255,0.5)">${decorations.cornerBadge}</text>`
+      `<text x="${w - 30}" y="35" text-anchor="end" font-family="monospace" font-size="18" fill="rgba(255,255,255,0.5)">${decorations.cornerBadge}</text>`,
     );
   }
 
@@ -185,7 +198,7 @@ function buildDecorations(decorations, width, height) {
     parts.push(
       `<g transform="translate(${w - 60}, ${h - 60}) scale(0.4)" opacity="0.3">
         <path d="${decorations.logo}" fill="white"/>
-      </g>`
+      </g>`,
     );
   }
 

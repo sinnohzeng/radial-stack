@@ -1,13 +1,19 @@
 import './style.css';
-import { state, DEFAULT_FONT_FAMILY, BUILTIN_FONT_FAMILY } from './state.js';
+import { state, DEFAULT_FONT_FAMILY } from './state.js';
 import { downloadSVG, downloadPNG } from './export.js';
 import { buildSVG } from '../src/core/svg-builder.js';
 import { getAllPalettes } from '../src/core/palettes.js';
 import { getScenePreset, getResolutionPreset } from '../src/core/presets.js';
-import { t, setLocale, getLocale, getAvailableLocales, applyTranslations } from './i18n.js';
-import { initTheme, toggleTheme, getTheme } from './theme.js';
-import { getFontFamily, getSvgFontFamily, applyFontForLocale, getWoff2Url } from './fonts.js';
+import { t, setLocale, getLocale, applyTranslations } from './i18n.js';
+import { initTheme, toggleTheme } from './theme.js';
+import { getSvgFontFamily, applyFontForLocale, getWoff2Url } from './fonts.js';
+import { debounce } from './utils.js';
 import pkg from '../package.json';
+
+// --- Constants ---
+
+const NOISE_FREQUENCY_MAP = { off: 0, low: 0.35, medium: 0.65, high: 1.0 };
+const DEFAULT_CANVAS_SIZE = 800;
 
 // --- Font management ---
 
@@ -19,12 +25,16 @@ async function loadOpentype() {
 let wawoff2Cache = null;
 async function loadWawoff2() {
   if (wawoff2Cache) return wawoff2Cache;
-  // Load wawoff2 WASM module
-  const init = new Promise((resolve) => { window.Module = { onRuntimeInitialized: resolve }; });
+  const init = new Promise((resolve) => {
+    window.Module = { onRuntimeInitialized: resolve };
+  });
   const script = document.createElement('script');
-  script.src = 'https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js';
+  script.src = '/wawoff2-decompress.js';
   document.head.appendChild(script);
-  await new Promise((resolve, reject) => { script.onload = resolve; script.onerror = reject; });
+  await new Promise((resolve, reject) => {
+    script.onload = resolve;
+    script.onerror = reject;
+  });
   await init;
   wawoff2Cache = window.Module;
   return wawoff2Cache;
@@ -42,7 +52,6 @@ async function handleFontChange(value) {
       const woff2Url = getWoff2Url(getLocale());
       const resp = await fetch(woff2Url);
       const buf = await resp.arrayBuffer();
-      // WOFF2 needs decompression before opentype can parse
       let fontBuf = buf;
       try {
         const wawoff2Module = await loadWawoff2();
@@ -76,7 +85,7 @@ async function handleFontUpload(file) {
 
   const ext = file.name.split('.').pop().toLowerCase();
   if (ext !== 'ttf' && ext !== 'otf') {
-    statusEl.textContent = '请使用 TTF 或 OTF 格式的字体文件';
+    statusEl.textContent = t('msg.font_format_error');
     statusEl.className = 'font-status error';
     selectEl.value = 'builtin';
     handleFontChange('builtin');
@@ -96,11 +105,11 @@ async function handleFontUpload(file) {
     document.head.appendChild(style);
 
     state.fontFamily = `'${fontName}', ${DEFAULT_FONT_FAMILY}`;
-    statusEl.textContent = `已加载: ${fontName}`;
+    statusEl.textContent = `${t('msg.font_loaded')} ${fontName}`;
     statusEl.className = 'font-status';
     updatePreview();
   } catch (e) {
-    statusEl.textContent = '字体文件解析失败，请检查文件是否完整';
+    statusEl.textContent = t('msg.font_error');
     statusEl.className = 'font-status error';
     console.error('Font parse error:', e);
     selectEl.value = 'builtin';
@@ -111,16 +120,15 @@ async function handleFontUpload(file) {
 // --- Preview ---
 
 function updatePreview() {
-  const name = document.getElementById('nameInput').value || '部门名称';
+  const name = document.getElementById('nameInput').value || t('placeholder.default_name');
   const layers = parseInt(document.getElementById('layersSlider').value);
   const saturation = parseInt(document.getElementById('saturationSlider').value);
   const blur = parseInt(document.getElementById('blurSlider').value);
   const noise = state.noiseLevel !== 'off';
-  const noiseFrequency = { off: 0, low: 0.35, medium: 0.65, high: 1.0 }[state.noiseLevel] || 0.65;
+  const noiseFrequency = NOISE_FREQUENCY_MAP[state.noiseLevel] || 0.65;
   const blendMode = document.getElementById('blendSelect').value || undefined;
   const seed = document.getElementById('seedInput').value || undefined;
 
-  // Typography options (inlined from former getTypographyOptions)
   const fontSizeVal = parseInt(document.getElementById('fontSizeSlider').value);
   const fontSize = fontSizeVal > 0 ? fontSizeVal : undefined;
   const fontWeight = parseInt(document.getElementById('fontWeightSelect').value);
@@ -130,13 +138,13 @@ function updatePreview() {
   const autoColor = document.getElementById('textColorAuto')?.checked ?? true;
   const textColor = autoColor ? undefined : document.getElementById('textColorInput').value;
 
-  document.getElementById('fontSizeValue').textContent = fontSize ? fontSize + 'px' : '自动';
+  document.getElementById('fontSizeValue').textContent = fontSize ? fontSize + 'px' : t('label.auto');
   document.getElementById('letterSpacingValue').textContent = letterSpacing;
   document.getElementById('lineHeightValue').textContent = lineHeight.toFixed(1);
 
   const preset = getScenePreset(state.preset);
-  const w = preset ? preset.width : 800;
-  const h = preset ? preset.height : 800;
+  const w = preset ? preset.width : DEFAULT_CANVAS_SIZE;
+  const h = preset ? preset.height : DEFAULT_CANVAS_SIZE;
 
   state.currentOptions = {
     name,
@@ -146,8 +154,18 @@ function updatePreview() {
     textStyle: state.textStyle,
     fontFamily: state.fontFamily,
     font: state.fontObj,
-    layers, saturation, blur, noise, noiseFrequency, blendMode, seed,
-    fontSize, fontWeight, letterSpacing, lineHeight, textColor,
+    layers,
+    saturation,
+    blur,
+    noise,
+    noiseFrequency,
+    blendMode,
+    seed,
+    fontSize,
+    fontWeight,
+    letterSpacing,
+    lineHeight,
+    textColor,
   };
 
   const svg = buildSVG(state.currentOptions);
@@ -162,7 +180,7 @@ function updatePreview() {
   const errorNode = doc.querySelector('parsererror');
   if (errorNode) {
     const errMsg = document.createElement('p');
-    errMsg.textContent = 'SVG 解析错误';
+    errMsg.textContent = t('msg.svg_parse_error');
     errMsg.style.color = '#ff6b6b';
     frame.appendChild(errMsg);
     return;
@@ -176,24 +194,37 @@ function updatePreview() {
   state.lastName = name;
 }
 
+// --- Option group helper ---
+
+function bindOptionGroup(container, selector, getKey, callback) {
+  container.addEventListener('click', (e) => {
+    const option = e.target.closest(selector);
+    if (!option) return;
+    container.querySelectorAll(selector).forEach((el) => el.classList.remove('active'));
+    option.classList.add('active');
+    callback(getKey(option));
+  });
+}
+
 // --- Init ---
 
 function init() {
-  // Text input
-  document.getElementById('nameInput').addEventListener('input', updatePreview);
+  const debouncedPreview = debounce(updatePreview, 150);
 
-  // Preset select — handled below with updateResolutionLabels
+  // Text input (debounced)
+  document.getElementById('nameInput').addEventListener('input', debouncedPreview);
 
-  // Resolution pills (event delegation)
-  document.querySelectorAll('.res-pill').forEach(el => {
-    el.addEventListener('click', () => {
-      document.querySelectorAll('.res-pill').forEach(e => e.classList.remove('active'));
-      el.classList.add('active');
-      state.resolution = el.dataset.res;
-    });
-  });
+  // Resolution pills
+  bindOptionGroup(
+    document.querySelector('.resolution-pills'),
+    '.res-pill',
+    (el) => el.dataset.res,
+    (res) => {
+      state.resolution = res;
+    },
+  );
 
-  // Palette grid — build DOM and bind via event delegation
+  // Palette grid — build DOM
   const palettes = getAllPalettes();
   const grid = document.getElementById('paletteGrid');
   palettes.forEach((p, i) => {
@@ -203,7 +234,7 @@ function init() {
 
     const dotsDiv = document.createElement('div');
     dotsDiv.className = 'palette-dots';
-    p.colors.slice(0, 4).forEach(c => {
+    p.colors.slice(0, 4).forEach((c) => {
       const dot = document.createElement('span');
       dot.className = 'palette-dot';
       dot.style.background = c;
@@ -220,54 +251,52 @@ function init() {
     grid.appendChild(div);
   });
 
-  grid.addEventListener('click', (e) => {
-    const option = e.target.closest('.palette-option');
-    if (!option) return;
-    document.querySelectorAll('.palette-option').forEach(el => el.classList.remove('active'));
-    option.classList.add('active');
-    state.palette = option.dataset.palette;
+  // Palette grid — bind
+  bindOptionGroup(grid, '.palette-option', (el) => el.dataset.palette, (palette) => {
+    state.palette = palette;
     updatePreview();
   });
 
-  // Text style grid (event delegation)
-  document.querySelector('.style-grid').addEventListener('click', (e) => {
-    const option = e.target.closest('.style-option');
-    if (!option) return;
-    document.querySelectorAll('.style-option').forEach(el => el.classList.remove('active'));
-    option.classList.add('active');
-    state.textStyle = option.dataset.style;
-    updatePreview();
-  });
+  // Text style grid
+  bindOptionGroup(
+    document.querySelector('.style-grid'),
+    '.style-option',
+    (el) => el.dataset.style,
+    (style) => {
+      state.textStyle = style;
+      updatePreview();
+    },
+  );
 
-  // Sliders
-  ['layers', 'saturation', 'blur'].forEach(type => {
+  // Gradient sliders (debounced)
+  ['layers', 'saturation', 'blur'].forEach((type) => {
     const slider = document.getElementById(type + 'Slider');
     slider.addEventListener('input', () => {
       const display = document.getElementById(type + 'Value');
       display.textContent = slider.value + (type === 'saturation' ? '%' : '');
-      updatePreview();
+      debouncedPreview();
     });
   });
 
-  // Typography sliders
-  ['fontSize', 'letterSpacing', 'lineHeight'].forEach(id => {
+  // Typography sliders (debounced)
+  ['fontSize', 'letterSpacing', 'lineHeight'].forEach((id) => {
     const slider = document.getElementById(id + 'Slider');
-    if (slider) slider.addEventListener('input', updatePreview);
+    if (slider) slider.addEventListener('input', debouncedPreview);
   });
 
   // Font weight select
   const fontWeightSelect = document.getElementById('fontWeightSelect');
   if (fontWeightSelect) fontWeightSelect.addEventListener('change', updatePreview);
 
-  // Text color input
+  // Text color input (debounced)
   const textColorInput = document.getElementById('textColorInput');
-  if (textColorInput) textColorInput.addEventListener('input', updatePreview);
+  if (textColorInput) textColorInput.addEventListener('input', debouncedPreview);
 
   // Blend mode select
   document.getElementById('blendSelect').addEventListener('change', updatePreview);
 
   // Seed controls
-  document.getElementById('seedInput').addEventListener('input', updatePreview);
+  document.getElementById('seedInput').addEventListener('input', debouncedPreview);
   const btnRandomSeed = document.getElementById('btnRandomSeed');
   if (btnRandomSeed) {
     btnRandomSeed.addEventListener('click', () => {
@@ -284,7 +313,7 @@ function init() {
   }
 
   // Collapsible sections
-  document.querySelectorAll('[data-toggle-section]').forEach(el => {
+  document.querySelectorAll('[data-toggle-section]').forEach((el) => {
     el.addEventListener('click', () => {
       const sectionId = el.dataset.toggleSection;
       document.getElementById(sectionId).classList.toggle('collapsed');
@@ -321,21 +350,40 @@ function init() {
   document.getElementById('btnDownloadSVG').addEventListener('click', downloadSVG);
   document.getElementById('btnDownloadPNG').addEventListener('click', downloadPNG);
 
-  // Tab switching
+  // Tab switching with ARIA
   document.getElementById('tabBar').addEventListener('click', (e) => {
     const tab = e.target.closest('.tab');
     if (!tab) return;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach((t) => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
     tab.classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.setAttribute('aria-selected', 'true');
+    document.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+
+  // Tab keyboard navigation
+  document.getElementById('tabBar').addEventListener('keydown', (e) => {
+    const tabs = [...document.querySelectorAll('.tab')];
+    const current = tabs.findIndex((t) => t.classList.contains('active'));
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (current + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = tabs.length - 1;
+    if (next >= 0) {
+      e.preventDefault();
+      tabs[next].click();
+      tabs[next].focus();
+    }
   });
 
   // Theme toggle
   document.getElementById('btnTheme').addEventListener('click', () => {
     const next = toggleTheme();
     state.theme = next;
-    // Update icon
     document.getElementById('btnTheme').textContent = next === 'dark' ? '☀' : '☾';
   });
 
@@ -343,26 +391,29 @@ function init() {
   document.getElementById('langSelect').addEventListener('change', (e) => {
     setLocale(e.target.value);
     state.locale = e.target.value;
+    document.documentElement.lang = e.target.value;
+    document.title = t('app.title');
     applyFontForLocale(e.target.value);
     state.fontFamily = getSvgFontFamily(e.target.value);
     applyTranslations();
     // Re-render palette labels
-    document.querySelectorAll('.palette-name').forEach(el => {
+    document.querySelectorAll('.palette-name').forEach((el) => {
       const key = el.dataset.i18nKey;
       if (key) el.textContent = t(key);
     });
-    handleFontChange('builtin'); // reload font for new locale
+    handleFontChange('builtin');
   });
 
-  // Noise pills (event delegation)
-  document.getElementById('noisePills').addEventListener('click', (e) => {
-    const pill = e.target.closest('.noise-pill');
-    if (!pill) return;
-    document.querySelectorAll('.noise-pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    state.noiseLevel = pill.dataset.noise;
-    updatePreview();
-  });
+  // Noise pills
+  bindOptionGroup(
+    document.getElementById('noisePills'),
+    '.noise-pill',
+    (el) => el.dataset.noise,
+    (noise) => {
+      state.noiseLevel = noise;
+      updatePreview();
+    },
+  );
 
   // Auto text color checkbox
   const textColorAuto = document.getElementById('textColorAuto');
@@ -377,19 +428,19 @@ function init() {
   // Regenerate button
   document.getElementById('btnRegenerate').addEventListener('click', updatePreview);
 
-  // Resolution pills — update pixel labels
+  // Resolution labels
   function updateResolutionLabels() {
     const preset = getScenePreset(state.preset);
-    const w = preset ? preset.width : 800;
-    const h = preset ? preset.height : 800;
-    ['standard', 'hd', '2k', '4k', '8k'].forEach(res => {
+    const w = preset ? preset.width : DEFAULT_CANVAS_SIZE;
+    const h = preset ? preset.height : DEFAULT_CANVAS_SIZE;
+    ['standard', 'hd', '2k', '4k', '8k'].forEach((res) => {
       const rp = getResolutionPreset(res);
       const el = document.getElementById('resDims-' + res);
       if (el && rp) el.textContent = `${Math.round(w * rp.scale)}×${Math.round(h * rp.scale)}`;
     });
   }
 
-  // Update preset handler to also update resolution labels
+  // Preset select
   document.getElementById('presetSelect').addEventListener('change', (e) => {
     state.preset = e.target.value;
     updateResolutionLabels();
@@ -403,6 +454,7 @@ function init() {
   // Initialize locale
   const locale = getLocale();
   state.locale = locale;
+  document.documentElement.lang = locale;
   document.getElementById('langSelect').value = locale;
   applyFontForLocale(locale);
   state.fontFamily = getSvgFontFamily(locale);
@@ -410,8 +462,9 @@ function init() {
   // Set version
   document.getElementById('appVersion').textContent = 'v' + pkg.version;
 
-  // Apply translations
+  // Apply translations (including title)
   applyTranslations();
+  document.title = t('app.title');
 
   // Update resolution pixel labels
   updateResolutionLabels();
@@ -420,5 +473,10 @@ function init() {
   handleFontChange('builtin');
   updatePreview();
 }
+
+// Global error handler
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled promise rejection:', e.reason);
+});
 
 init();

@@ -4,20 +4,26 @@
  */
 
 const FONT_MAP = {
-  'zh-CN': { family: 'Alibaba PuHuiTi 3', fallback: '"PingFang SC", "Microsoft YaHei", sans-serif' },
-  'zh-TW': { family: 'Alibaba Sans HK', fallback: '"PingFang TC", "Microsoft JhengHei", sans-serif' },
-  'ko':    { family: 'Alibaba Sans KR', fallback: '"Malgun Gothic", sans-serif' },
-  'ja':    { family: 'Alibaba Sans JP', fallback: '"Hiragino Sans", "Yu Gothic", sans-serif' },
-  'en':    { family: 'Alibaba PuHuiTi 3', fallback: 'system-ui, sans-serif' },
+  'zh-CN': {
+    family: 'Alibaba PuHuiTi 3',
+    fallback: '"PingFang SC", "Microsoft YaHei", sans-serif',
+  },
+  'zh-HK': {
+    family: 'Alibaba Sans HK',
+    fallback: '"PingFang HK", "Microsoft JhengHei", sans-serif',
+  },
+  ko: { family: 'Alibaba Sans KR', fallback: '"Malgun Gothic", sans-serif' },
+  ja: { family: 'Alibaba Sans JP', fallback: '"Hiragino Sans", "Yu Gothic", sans-serif' },
+  en: { family: 'Alibaba PuHuiTi 3', fallback: 'system-ui, sans-serif' },
 };
 
 // WOFF2 file map for outline/measurement loading
 const WOFF2_MAP = {
   'zh-CN': '/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2',
-  'zh-TW': '/fonts/AlibabaSansHK-75.woff2',
-  'ko':    '/fonts/AlibabaSansKR-Bold.woff2',
-  'ja':    '/fonts/AlibabaSansJP-Bold.woff2',
-  'en':    '/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2',
+  'zh-HK': '/fonts/AlibabaSansHK-75.woff2',
+  ko: '/fonts/AlibabaSansKR-Bold.woff2',
+  ja: '/fonts/AlibabaSansJP-Bold.woff2',
+  en: '/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2',
 };
 
 export function getFontFamily(locale) {

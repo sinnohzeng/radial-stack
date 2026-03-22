@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createRng } from '../src/core/utils.js';
-import { generateGradientDefs, generateGradientStyles, generateGradientLayers } from '../src/core/gradient.js';
+import {
+  generateGradientDefs,
+  generateGradientStyles,
+  generateGradientLayers,
+} from '../src/core/gradient.js';
 
 const TEST_COLORS = ['#FF6B6B', '#FF8E53', '#FFA07A', '#FFB347', '#FF69B4'];
 

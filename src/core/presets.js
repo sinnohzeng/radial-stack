@@ -296,7 +296,7 @@ export function formatPresetListing() {
       const ratio = `${p.width}×${p.height}`;
       const png = `${p.pngWidth}×${p.pngHeight}`;
       lines.push(
-        `    ${p.name.padEnd(22)} ${p.label.padEnd(10)} ${ratio.padEnd(12)} PNG ${png.padEnd(12)} ${p.description}`
+        `    ${p.name.padEnd(22)} ${p.label.padEnd(10)} ${ratio.padEnd(12)} PNG ${png.padEnd(12)} ${p.description}`,
       );
     }
     lines.push('');

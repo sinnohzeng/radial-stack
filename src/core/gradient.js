@@ -34,7 +34,7 @@ function selectPrimaryColors(colors, rng) {
  * @param {number} layerCount
  * @returns {{ defs: string, gradientIds: string[] }}
  */
-export function generateGradientDefs(paletteColors, rng, layerCount) {
+export function generateGradientDefs(paletteColors, rng, _layerCount) {
   const primaryColors = selectPrimaryColors(paletteColors, rng);
   const gradientIds = [];
   const gradients = [];
@@ -53,7 +53,7 @@ export function generateGradientDefs(paletteColors, rng, layerCount) {
     if (useThreeStops) {
       const otherColor = pickRandom(
         primaryColors.filter((c) => c !== color),
-        rng
+        rng,
       );
       const mid = midpointColor(color, otherColor);
       stops = [
@@ -68,9 +68,7 @@ export function generateGradientDefs(paletteColors, rng, layerCount) {
       ].join('');
     }
 
-    gradients.push(
-      `<radialGradient id="${id}" fx="${fx}" fy="${fy}">${stops}</radialGradient>`
-    );
+    gradients.push(`<radialGradient id="${id}" fx="${fx}" fy="${fy}">${stops}</radialGradient>`);
   }
 
   return {
@@ -146,7 +144,7 @@ export function generateGradientLayers(gradientIds, rng, layerCount, width, heig
     const opacity = randomRange(0.4 + progress * 0.3, 0.7 + progress * 0.3, rng).toFixed(2);
 
     rects.push(
-      `<rect class="r${gradIndex}" x="0" y="0" width="100%" height="100%" opacity="${opacity}" transform="${transform}"/>`
+      `<rect class="r${gradIndex}" x="0" y="0" width="100%" height="100%" opacity="${opacity}" transform="${transform}"/>`,
     );
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "radial-stack",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "基于 SVG 多层径向渐变叠加技术的文本标识图生成器，参照 Justin Jay Wang 渐变方法论",
   "type": "module",
   "main": "generate.js",
@@ -14,7 +14,9 @@
     "preview": "vite preview",
     "generate": "node generate.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write ."
   },
   "keywords": [
     "gradient",
@@ -23,14 +25,22 @@
     "generator"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "commander": "^14.0.3",
     "culori": "^4.0.2",
     "opentype.js": "^1.3.4",
-    "seedrandom": "^3.0.5"
+    "seedrandom": "^3.0.5",
+    "wawoff2": "^2.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "vite": "^8.0.1",
     "vitest": "^4.1.0"
   }

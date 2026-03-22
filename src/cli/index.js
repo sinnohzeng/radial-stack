@@ -3,8 +3,15 @@ import { Command } from 'commander';
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { resolve, join } from 'path';
 import { buildSVG } from '../core/svg-builder.js';
-import { resolvePalette, hintToPaletteName, getAllPaletteNames } from '../core/palettes.js';
-import { getScenePreset, getResolutionPreset, getAllScenePresetNames, getAllResolutionPresetNames, computeExportSize, formatPresetListing } from '../core/presets.js';
+import { hintToPaletteName, getAllPaletteNames } from '../core/palettes.js';
+import {
+  getScenePreset,
+  getResolutionPreset,
+  getAllScenePresetNames,
+  getAllResolutionPresetNames,
+  computeExportSize,
+  formatPresetListing,
+} from '../core/presets.js';
 import { readInput } from './file-reader.js';
 import { svgToPng } from './png-export.js';
 import { generateOverviewHTML } from './overview.js';
@@ -106,9 +113,7 @@ function validateConfig(config) {
  */
 async function generateOne(entry, config, outputDir, index, total) {
   const name = entry.name;
-  const palette = entry.color_hint
-    ? hintToPaletteName(entry.color_hint)
-    : config.palette || 'warm';
+  const palette = entry.color_hint ? hintToPaletteName(entry.color_hint) : config.palette || 'warm';
 
   if (index !== undefined && total !== undefined) {
     console.log(`  [${index + 1}/${total}] 正在生成: ${name}...`);
@@ -118,8 +123,12 @@ async function generateOne(entry, config, outputDir, index, total) {
   const scenePreset = config.preset ? getScenePreset(config.preset) : null;
   const resPreset = config.resolution ? getResolutionPreset(config.resolution) : null;
 
-  const svgWidth = scenePreset ? scenePreset.width : (Number(config.width) || Number(config.size) || 800);
-  const svgHeight = scenePreset ? scenePreset.height : (Number(config.height) || Number(config.size) || 800);
+  const svgWidth = scenePreset
+    ? scenePreset.width
+    : Number(config.width) || Number(config.size) || 800;
+  const svgHeight = scenePreset
+    ? scenePreset.height
+    : Number(config.height) || Number(config.size) || 800;
 
   // Load font if --font-path is specified (for measurement + outline)
   let fontObj = null;

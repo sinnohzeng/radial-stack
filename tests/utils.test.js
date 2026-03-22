@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { createRng, pickRandom, randomRange, hashString, escapeXml, clamp } from '../src/core/utils.js';
+import {
+  createRng,
+  pickRandom,
+  randomRange,
+  hashString,
+  escapeXml,
+  clamp,
+} from '../src/core/utils.js';
 
 describe('createRng', () => {
   it('returns a function', () => {
@@ -136,7 +143,7 @@ describe('escapeXml', () => {
 
   it('escapes all special characters together', () => {
     expect(escapeXml('R&D <"test"> \'ok\'')).toBe(
-      'R&amp;D &lt;&quot;test&quot;&gt; &apos;ok&apos;'
+      'R&amp;D &lt;&quot;test&quot;&gt; &apos;ok&apos;',
     );
   });
 

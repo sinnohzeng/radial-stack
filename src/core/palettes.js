@@ -126,9 +126,7 @@ export function resolvePalette(nameOrColors) {
   const palette = PALETTES[nameOrColors];
   if (!palette) {
     const available = Object.keys(PALETTES).join(', ');
-    throw new Error(
-      `Unknown palette "${nameOrColors}". Available: ${available}`
-    );
+    throw new Error(`Unknown palette "${nameOrColors}". Available: ${available}`);
   }
   return palette;
 }
