@@ -56,6 +56,9 @@
           <button class="btn" id="btnDownloadPNG" aria-label="Download PNG">
             <span>PNG</span><span style="font-size: 14px">&darr;</span>
           </button>
+          <button class="btn" id="btnDownloadJPG" aria-label="Download JPG">
+            <span>JPG</span><span style="font-size: 14px">&darr;</span>
+          </button>
         </div>
       </header>
 
@@ -363,10 +366,10 @@
           <div class="section">
             <div class="section-label" data-i18n="section.noise_texture">噪点纹理</div>
             <div class="noise-pills" id="noisePills" role="radiogroup" aria-label="Noise texture">
-              <span class="noise-pill" data-noise="off" data-i18n="noise.off" role="radio" aria-checked="false" tabindex="0">关闭</span>
-              <span class="noise-pill" data-noise="low" data-i18n="noise.low" role="radio" aria-checked="false" tabindex="0">低</span>
-              <span class="noise-pill active" data-noise="medium" data-i18n="noise.medium" role="radio" aria-checked="true" tabindex="0">中</span>
+              <span class="noise-pill active" data-noise="off" data-i18n="noise.off" role="radio" aria-checked="true" tabindex="0">关闭</span>
               <span class="noise-pill" data-noise="high" data-i18n="noise.high" role="radio" aria-checked="false" tabindex="0">高</span>
+              <span class="noise-pill" data-noise="intense" data-i18n="noise.intense" role="radio" aria-checked="false" tabindex="0">强烈</span>
+              <span class="noise-pill" data-noise="extreme" data-i18n="noise.extreme" role="radio" aria-checked="false" tabindex="0">极致</span>
             </div>
           </div>
 
@@ -390,6 +393,18 @@
       <main class="preview">
         <div class="preview-frame" id="previewFrame" aria-label="Preview"></div>
       </main>
+
+      <!-- FAB: mobile download buttons -->
+      <div class="fab-container" id="fabContainer">
+        <div class="fab-menu" id="fabMenu" role="menu">
+          <button class="fab-item" id="fabDownloadSVG" role="menuitem" data-i18n-aria-label="button.download_svg">SVG</button>
+          <button class="fab-item" id="fabDownloadPNG" role="menuitem" data-i18n-aria-label="button.download_png">PNG</button>
+          <button class="fab-item" id="fabDownloadJPG" role="menuitem" data-i18n-aria-label="button.download_jpg">JPG</button>
+        </div>
+        <button class="fab-trigger" id="fabTrigger" aria-expanded="false" aria-haspopup="menu" data-i18n-aria-label="button.download">
+          <span class="fab-icon">&darr;</span>
+        </button>
+      </div>
     </div>
 
     <script type="module" src="./main.js"></script>

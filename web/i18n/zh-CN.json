@@ -43,9 +43,9 @@
   "style.vertical": "竖排",
   "style.none": "无文字",
   "noise.off": "关闭",
-  "noise.low": "低",
-  "noise.medium": "中",
   "noise.high": "高",
+  "noise.intense": "强烈",
+  "noise.extreme": "极致",
   "weight.regular": "常规",
   "weight.medium": "中等",
   "weight.semibold": "半粗",
@@ -98,5 +98,9 @@
   "msg.font_loaded": "已加载",
   "msg.font_error": "字体文件解析失败",
   "msg.font_format_error": "请使用 TTF 或 OTF 格式",
-  "msg.using_default_font": "使用默认字体"
+  "msg.using_default_font": "使用默认字体",
+  "button.download_svg": "下载 SVG",
+  "button.download_png": "下载 PNG",
+  "button.download_jpg": "下载 JPG",
+  "button.download": "下载"
 }

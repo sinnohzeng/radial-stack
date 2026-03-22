@@ -5,6 +5,27 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.3.0] - 2026-03-22
+
+### 新增
+
+- **JPG 导出**：新增 JPG 下载功能，使用二分查找自适应压缩算法，自动将文件压缩至 ≤2MB（quality 区间 0.75-0.92）
+- **移动端 FAB**：≤860px 屏幕下，下载按钮从导航栏移至右下角悬浮按钮组（FAB），支持 SVG/PNG/JPG 三种格式
+- **噪点档位升级**：删除效果弱的"低"和"中"档位，新增"强烈"（baseFrequency=1.0）和"极致"（baseFrequency=1.5）档位
+
+### 变更
+
+- **噪点默认关闭**：噪点纹理默认值从"中"改为"关闭"，避免 PNG 体积暴涨
+- **numOctaves 联动**：噪点 `numOctaves` 随 `baseFrequency` 自动联动（高=3, 强烈=4, 极致=5），高档位层次感更丰富
+- **导出管线重构**：抽取 `renderToCanvas()` 公共函数，PNG/JPG 共享 SVG→Canvas 渲染管线，消除代码重复
+- **导航栏优化**：移动端下载按钮移至 FAB 后，导航栏更简洁；≤380px 极小屏隐藏品牌文字仅保留 logo
+
+### 无障碍
+
+- FAB 完整 WCAG 2.2 支持：`aria-expanded`、`aria-haspopup="menu"`、`role="menu/menuitem"`、Escape 关闭 + 焦点回归
+
+---
+
 ## [2.2.0] - 2026-03-21
 
 ### 工程化

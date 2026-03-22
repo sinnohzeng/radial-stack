@@ -1,6 +1,6 @@
 {
   "name": "radial-stack",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "基于 SVG 多层径向渐变叠加技术的文本标识图生成器，参照 Justin Jay Wang 渐变方法论",
   "type": "module",
   "main": "generate.js",

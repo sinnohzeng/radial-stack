@@ -26,7 +26,7 @@ export const state = createState({
   resolution: '4k',
   locale: 'zh-CN',
   theme: 'dark',
-  noiseLevel: 'medium',
+  noiseLevel: 'off',
   autoTextColor: true,
   fontFamily: BUILTIN_FONT_FAMILY,
   fontObj: null,

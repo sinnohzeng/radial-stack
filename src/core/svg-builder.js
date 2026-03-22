@@ -154,8 +154,9 @@ function buildFilters(blur, noise, noiseFrequency = 0.65) {
   }
 
   if (noise) {
+    const numOctaves = noiseFrequency <= 0.65 ? 3 : noiseFrequency <= 1.0 ? 4 : 5;
     filterParts.push(
-      `<feTurbulence type="fractalNoise" baseFrequency="${noiseFrequency}" numOctaves="3" result="noise"/>`,
+      `<feTurbulence type="fractalNoise" baseFrequency="${noiseFrequency}" numOctaves="${numOctaves}" result="noise"/>`,
       `<feBlend in="${blur ? 'blurred' : 'SourceGraphic'}" in2="noise" mode="soft-light"/>`,
     );
   }

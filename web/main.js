@@ -1,6 +1,6 @@
 import './style.css';
 import { state, DEFAULT_FONT_FAMILY } from './state.js';
-import { downloadSVG, downloadPNG } from './export.js';
+import { downloadSVG, downloadPNG, downloadJPG } from './export.js';
 import { buildSVG } from '../src/core/svg-builder.js';
 import { getAllPalettes } from '../src/core/palettes.js';
 import { getScenePreset, getResolutionPreset } from '../src/core/presets.js';
@@ -19,7 +19,7 @@ import pkg from '../package.json';
 
 // --- Constants ---
 
-const NOISE_FREQUENCY_MAP = { off: 0, low: 0.35, medium: 0.65, high: 1.0 };
+const NOISE_FREQUENCY_MAP = { off: 0, high: 0.65, intense: 1.0, extreme: 1.5 };
 const DEFAULT_CANVAS_SIZE = 800;
 
 // --- Font management ---
@@ -357,6 +357,45 @@ function init() {
   // Download buttons
   document.getElementById('btnDownloadSVG').addEventListener('click', downloadSVG);
   document.getElementById('btnDownloadPNG').addEventListener('click', downloadPNG);
+  document.getElementById('btnDownloadJPG').addEventListener('click', downloadJPG);
+
+  // FAB (mobile floating download)
+  const fabContainer = document.getElementById('fabContainer');
+  const fabTrigger = document.getElementById('fabTrigger');
+
+  function closeFab() {
+    fabContainer.classList.remove('open');
+    fabTrigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleFab() {
+    const isOpen = fabContainer.classList.toggle('open');
+    fabTrigger.setAttribute('aria-expanded', String(isOpen));
+  }
+
+  fabTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFab();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!fabContainer.contains(e.target)) closeFab();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && fabContainer.classList.contains('open')) {
+      closeFab();
+      fabTrigger.focus();
+    }
+  });
+
+  const fabActions = [downloadSVG, downloadPNG, downloadJPG];
+  ['fabDownloadSVG', 'fabDownloadPNG', 'fabDownloadJPG'].forEach((id, i) => {
+    document.getElementById(id)?.addEventListener('click', () => {
+      fabActions[i]();
+      closeFab();
+    });
+  });
 
   // Tab switching with ARIA
   document.getElementById('tabBar').addEventListener('click', (e) => {

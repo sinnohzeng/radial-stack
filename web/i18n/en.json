@@ -43,9 +43,9 @@
   "style.vertical": "Vertical",
   "style.none": "No Text",
   "noise.off": "Off",
-  "noise.low": "Low",
-  "noise.medium": "Medium",
   "noise.high": "High",
+  "noise.intense": "Intense",
+  "noise.extreme": "Extreme",
   "weight.regular": "Regular",
   "weight.medium": "Medium",
   "weight.semibold": "Semibold",
@@ -98,5 +98,9 @@
   "msg.font_loaded": "Loaded",
   "msg.font_error": "Font file parsing failed",
   "msg.font_format_error": "Please use TTF or OTF format",
-  "msg.using_default_font": "Using default font"
+  "msg.using_default_font": "Using default font",
+  "button.download_svg": "Download SVG",
+  "button.download_png": "Download PNG",
+  "button.download_jpg": "Download JPG",
+  "button.download": "Download"
 }

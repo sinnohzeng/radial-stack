@@ -36,7 +36,8 @@ const svg = buildSVG({
 | `seed` | `string \| number` | 否 | 名称哈希 | 随机种子 |
 | `layers` | `number` | 否 | `12` | 渐变叠加层数 |
 | `blur` | `number` | 否 | `0` | 高斯模糊（0 = 禁用） |
-| `noise` | `boolean` | 否 | `false` | 噪声纹理 |
+| `noise` | `boolean` | 否 | `false` | 噪声纹理（启用后 numOctaves 随 noiseFrequency 自动联动） |
+| `noiseFrequency` | `number` | 否 | `0.65` | 噪点频率（Web 档位：高=0.65, 强烈=1.0, 极致=1.5），numOctaves 自动联动（3/4/5） |
 | `saturation` | `number` | 否 | `130` | 饱和度百分比 |
 | `textStyle` | `string` | 否 | `'pill'` | 文字排版方案 |
 | `fontSize` | `number` | 否 | 自动 | 覆盖自动字号 |

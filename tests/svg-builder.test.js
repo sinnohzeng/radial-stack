@@ -133,6 +133,21 @@ describe('buildSVG', () => {
       expect(svg).toContain('feTurbulence');
     });
 
+    it('links numOctaves to noiseFrequency for high level', () => {
+      const svg = buildSVG({ name: 'Test', noise: true, noiseFrequency: 0.65 });
+      expect(svg).toContain('numOctaves="3"');
+    });
+
+    it('links numOctaves to noiseFrequency for intense level', () => {
+      const svg = buildSVG({ name: 'Test', noise: true, noiseFrequency: 1.0 });
+      expect(svg).toContain('numOctaves="4"');
+    });
+
+    it('links numOctaves to noiseFrequency for extreme level', () => {
+      const svg = buildSVG({ name: 'Test', noise: true, noiseFrequency: 1.5 });
+      expect(svg).toContain('numOctaves="5"');
+    });
+
     it('includes blend mode when specified', () => {
       const svg = buildSVG({ name: 'Test', blendMode: 'multiply' });
       expect(svg).toContain('mix-blend-mode:multiply');

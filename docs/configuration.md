@@ -32,7 +32,7 @@ CLI 命令行参数  >  自定义配置文件 (--config)  >  config/default.json
 | `palette` | string | `"warm"` | `-p, --palette` | 配色方案名称 |
 | `layers` | number | `12` | `-l, --layers` | 渐变层数（1-30） |
 | `blur` | number | `0` | `--blur` | 高斯模糊程度（0-50，0 为禁用） |
-| `noise` | boolean | `false` | `--noise` | 启用噪声纹理 |
+| `noise` | boolean | `false` | `--noise` | 启用噪声纹理（Web 端支持 4 档：关闭/高/强烈/极致） |
 | `saturation` | number | `130` | `--saturation` | 饱和度滤镜百分比 |
 | `textStyle` | string | `"pill"` | `-t, --text-style` | 文字排版方案 |
 | `output` | string | `"./output"` | `-o, --output` | 输出目录 |
@@ -217,5 +217,13 @@ const svg = buildSVG({
   "saturation": 125
 }
 ```
+
+> **噪声纹理档位说明（Web UI）**：
+> - **关闭**（默认）：不启用噪声纹理
+> - **高**（baseFrequency=0.65, numOctaves=3）：适度的噪点纹理
+> - **强烈**（baseFrequency=1.0, numOctaves=4）：更密集、更有层次的噪点
+> - **极致**（baseFrequency=1.5, numOctaves=5）：极细腻的强噪点效果
+>
+> numOctaves 随档位自动联动，高档位不仅噪点更密，层次感也更丰富。CLI 模式下 `--noise` 使用高档位参数。
 
 > 所有配置项的默认值以 `config/default.json` 为准。

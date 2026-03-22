@@ -100,7 +100,7 @@ translate(center, center)           // 移动到画布中心
 
 - **饱和度滤镜**：SVG 根元素应用 `filter:saturate(125%-140%)`（默认 130%），让颜色更鲜艳
 - **可选高斯模糊**：`<feGaussianBlur>` 平滑渐变边缘
-- **可选噪声纹理**：`<feTurbulence>` + `<feBlend mode="soft-light">` 增加有机质感
+- **可选噪声纹理**：`<feTurbulence>` + `<feBlend mode="soft-light">` 增加有机质感。噪点分 4 档（关闭/高/强烈/极致），`numOctaves` 随 `baseFrequency` 自动联动（3/4/5），高档位不仅噪点更密，层次感也更丰富
 
 ## OKLCH 颜色科学
 
@@ -176,6 +176,10 @@ seedrandom (npm)        culori (npm)        commander (npm)    @resvg/resvg-js (
        ┌─────────┴──────────┐                     │                    │
        ▼                    ▼                     ▼                    ▼
    web/main.js         cli/index.js ─────► cli/png-export.js
+   web/export.js
+   (renderToCanvas
+    + compressToTarget
+    → SVG/PNG/JPG)
    (Vite 打包)              │
                             ▼
                        generate.js

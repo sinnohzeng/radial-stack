@@ -43,9 +43,9 @@
   "style.vertical": "縦書き",
   "style.none": "テキストなし",
   "noise.off": "オフ",
-  "noise.low": "低",
-  "noise.medium": "中",
   "noise.high": "高",
+  "noise.intense": "インテンス",
+  "noise.extreme": "エクストリーム",
   "weight.regular": "レギュラー",
   "weight.medium": "ミディアム",
   "weight.semibold": "セミボールド",
@@ -98,5 +98,9 @@
   "msg.font_loaded": "読み込み完了",
   "msg.font_error": "フォントファイルの解析に失敗",
   "msg.font_format_error": "TTF または OTF 形式をご使用ください",
-  "msg.using_default_font": "デフォルトフォントを使用"
+  "msg.using_default_font": "デフォルトフォントを使用",
+  "button.download_svg": "SVG をダウンロード",
+  "button.download_png": "PNG をダウンロード",
+  "button.download_jpg": "JPG をダウンロード",
+  "button.download": "ダウンロード"
 }
