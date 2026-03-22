@@ -1,0 +1,33 @@
+{
+  "name": "radial-stack",
+  "version": "1.0.0",
+  "description": "基于 SVG 多层径向渐变叠加技术的文本标识图生成器，参照 OpenAI 渐变风格",
+  "type": "module",
+  "main": "generate.js",
+  "bin": {
+    "radial-stack": "./generate.js"
+  },
+  "author": "Zeng Zixuan",
+  "scripts": {
+    "generate": "node generate.js",
+    "preview": "echo '打开 http://localhost:3000/web/index.html' && python3 -m http.server 3000",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "gradient",
+    "svg",
+    "badge",
+    "generator"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "commander": "^14.0.3",
+    "culori": "^4.0.2",
+    "seedrandom": "^3.0.5"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  }
+}
