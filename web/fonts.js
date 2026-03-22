@@ -26,13 +26,41 @@ const WOFF2_MAP = {
   en: '/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2',
 };
 
+// Maps builtin-* font selector values to locale keys
+const BUILTIN_FONT_LOCALE = {
+  'builtin-sc': 'zh-CN',
+  'builtin-hk': 'zh-HK',
+  'builtin-jp': 'ja',
+  'builtin-kr': 'ko',
+};
+
+// Maps locale to default builtin font value
+const LOCALE_TO_BUILTIN = {
+  'zh-CN': 'builtin-sc',
+  'zh-HK': 'builtin-hk',
+  ja: 'builtin-jp',
+  ko: 'builtin-kr',
+  en: 'builtin-sc',
+};
+
+export function isBuiltinFont(value) {
+  return value in BUILTIN_FONT_LOCALE;
+}
+
+export function getDefaultBuiltinFont(locale) {
+  return LOCALE_TO_BUILTIN[locale] || 'builtin-sc';
+}
+
+export function getBuiltinFontLocale(value) {
+  return BUILTIN_FONT_LOCALE[value] || 'zh-CN';
+}
+
 export function getFontFamily(locale) {
   const m = FONT_MAP[locale] || FONT_MAP['zh-CN'];
   return `"${m.family}", ${m.fallback}`;
 }
 
 export function getSvgFontFamily(locale) {
-  // For SVG font-family attribute
   const m = FONT_MAP[locale] || FONT_MAP['zh-CN'];
   return `"${m.family}", ${m.fallback}`;
 }

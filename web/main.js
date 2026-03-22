@@ -6,7 +6,14 @@ import { getAllPalettes } from '../src/core/palettes.js';
 import { getScenePreset, getResolutionPreset } from '../src/core/presets.js';
 import { t, setLocale, getLocale, applyTranslations } from './i18n.js';
 import { initTheme, toggleTheme } from './theme.js';
-import { getSvgFontFamily, applyFontForLocale, getWoff2Url } from './fonts.js';
+import {
+  getSvgFontFamily,
+  applyFontForLocale,
+  getWoff2Url,
+  isBuiltinFont,
+  getBuiltinFontLocale,
+  getDefaultBuiltinFont,
+} from './fonts.js';
 import { debounce } from './utils.js';
 import pkg from '../package.json';
 
@@ -46,10 +53,11 @@ async function handleFontChange(value) {
   statusEl.textContent = '';
   statusEl.className = 'font-status';
 
-  if (value === 'builtin') {
+  if (isBuiltinFont(value)) {
+    const fontLocale = getBuiltinFontLocale(value);
     try {
       const opentype = await loadOpentype();
-      const woff2Url = getWoff2Url(getLocale());
+      const woff2Url = getWoff2Url(fontLocale);
       const resp = await fetch(woff2Url);
       const buf = await resp.arrayBuffer();
       let fontBuf = buf;
@@ -60,12 +68,12 @@ async function handleFontChange(value) {
         console.warn('wawoff2 not available, trying direct parse:', e);
       }
       state.fontObj = opentype.parse(fontBuf);
-      state.fontFamily = getSvgFontFamily(getLocale());
-      statusEl.textContent = t('msg.font_loaded') + ' ' + t('font.builtin');
+      state.fontFamily = getSvgFontFamily(fontLocale);
+      statusEl.textContent = t('msg.font_loaded');
     } catch (e) {
       console.warn('Failed to load builtin font for measurement:', e);
       state.fontObj = null;
-      state.fontFamily = getSvgFontFamily(getLocale());
+      state.fontFamily = getSvgFontFamily(fontLocale);
     }
     updatePreview();
   } else if (value === 'system') {
@@ -87,8 +95,8 @@ async function handleFontUpload(file) {
   if (ext !== 'ttf' && ext !== 'otf') {
     statusEl.textContent = t('msg.font_format_error');
     statusEl.className = 'font-status error';
-    selectEl.value = 'builtin';
-    handleFontChange('builtin');
+    selectEl.value = 'builtin-sc';
+    handleFontChange(document.getElementById('fontSelect').value);
     return;
   }
 
@@ -112,8 +120,8 @@ async function handleFontUpload(file) {
     statusEl.textContent = t('msg.font_error');
     statusEl.className = 'font-status error';
     console.error('Font parse error:', e);
-    selectEl.value = 'builtin';
-    handleFontChange('builtin');
+    selectEl.value = 'builtin-sc';
+    handleFontChange(document.getElementById('fontSelect').value);
   }
 }
 
@@ -401,7 +409,11 @@ function init() {
       const key = el.dataset.i18nKey;
       if (key) el.textContent = t(key);
     });
-    handleFontChange('builtin');
+    // Switch to matching builtin font for new locale
+    const fontSelect = document.getElementById('fontSelect');
+    const builtinVal = getDefaultBuiltinFont(e.target.value);
+    fontSelect.value = builtinVal;
+    handleFontChange(builtinVal);
   });
 
   // Noise pills
@@ -424,9 +436,6 @@ function init() {
       updatePreview();
     });
   }
-
-  // Regenerate button
-  document.getElementById('btnRegenerate').addEventListener('click', updatePreview);
 
   // Resolution labels
   function updateResolutionLabels() {
@@ -459,6 +468,9 @@ function init() {
   applyFontForLocale(locale);
   state.fontFamily = getSvgFontFamily(locale);
 
+  // Set initial font select to match locale
+  document.getElementById('fontSelect').value = getDefaultBuiltinFont(locale);
+
   // Set version
   document.getElementById('appVersion').textContent = 'v' + pkg.version;
 
@@ -470,7 +482,7 @@ function init() {
   updateResolutionLabels();
 
   // Load builtin font and render
-  handleFontChange('builtin');
+  handleFontChange(document.getElementById('fontSelect').value);
   updatePreview();
 }
 

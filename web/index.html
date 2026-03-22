@@ -21,6 +21,15 @@
     <div class="app">
       <header class="header">
         <div class="header-brand">
+          <svg class="brand-icon" width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+            <defs>
+              <radialGradient id="fi-a" cx=".3" cy=".3"><stop offset="0" stop-color="#FF6B6B"/><stop offset="1" stop-color="#c8a0ff"/></radialGradient>
+              <radialGradient id="fi-b" cx=".7" cy=".6"><stop offset="0" stop-color="#67e8f9"/><stop offset="1" stop-color="#c8a0ff" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect width="32" height="32" rx="8" fill="#0a0a14"/>
+            <circle cx="10" cy="10" r="14" fill="url(#fi-a)" opacity=".8"/>
+            <circle cx="22" cy="20" r="12" fill="url(#fi-b)" opacity=".7"/>
+          </svg>
           <h1>Radial Stack</h1>
         </div>
         <div class="header-actions">
@@ -250,7 +259,10 @@
           <div class="section">
             <label class="section-label" for="fontSelect" data-i18n="section.font">字体</label>
             <select class="select-field" id="fontSelect">
-              <option value="builtin" selected data-i18n="font.builtin">阿里巴巴普惠体 3.0</option>
+              <option value="builtin-sc" selected data-i18n="font.builtin_sc">阿里巴巴普惠体 3.0（简体）</option>
+              <option value="builtin-hk" data-i18n="font.builtin_hk">Alibaba Sans HK（繁体）</option>
+              <option value="builtin-jp" data-i18n="font.builtin_jp">Alibaba Sans JP（日文）</option>
+              <option value="builtin-kr" data-i18n="font.builtin_kr">Alibaba Sans KR（韩文）</option>
               <option value="system" data-i18n="font.system">系统字体</option>
               <option value="custom" data-i18n="font.custom">上传自定义字体...</option>
             </select>
@@ -259,10 +271,10 @@
             <div class="toggle-row" style="margin-top: 10px">
               <span class="slider-label" data-i18n="label.outline">导出时轮廓化</span>
               <div
-                class="toggle"
+                class="toggle active"
                 id="outlineToggle"
                 role="switch"
-                aria-checked="false"
+                aria-checked="true"
                 tabindex="0"
                 data-i18n-title="label.outline"
                 title="将文字转为矢量路径"
@@ -372,14 +384,6 @@
             </select>
           </div>
 
-          <!-- Regenerate button -->
-          <div class="section" style="border-bottom: none">
-            <div class="btn-group">
-              <button class="btn-primary" id="btnRegenerate" data-i18n="label.regenerate">
-                重新生成
-              </button>
-            </div>
-          </div>
         </div>
       </aside>
 

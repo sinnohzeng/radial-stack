@@ -30,7 +30,7 @@ export const state = createState({
   autoTextColor: true,
   fontFamily: BUILTIN_FONT_FAMILY,
   fontObj: null,
-  outline: false,
+  outline: true,
   lastSVG: '',
   lastName: '',
   currentOptions: {},
